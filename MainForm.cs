@@ -1,52 +1,52 @@
 // Programming by Eric Chauvin.
-// My blogs are at:
-// ericlibproj.blogspot.com
-// and
-// ericbreakingrsa.blogspot.com
+// My blog is at:
+// ericsourcecode.blogspot.com
 
 
-
-// I'm just getting started on this code editor.
 // Microsoft Visual Studio has gotten too _helpful_,
 // with the Clippy character lightbulb and all the other
 // stuff flashing on the screen.  So I wanted to have
 // a basic code editor without all of the distractions.
+
 // I also wanted to have the menu font sizes big
 // enough so I can see them easily.
 
 // This calls MSBuild to build programs written in C#,
 // but this is also going to be used for Android/Gradle
-// and any other code I write.
+// and my C++ compiler.
 
 
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
+// using System.Data;
 using System.Drawing;
 using System.Text;
+// using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 using System.Diagnostics; // For starting a program/process.
 using System.IO;
-using System.Threading;
+using ECCommon;
 
 
 namespace CodeEditor
 {
   public partial class MainForm : Form
   {
-  internal const string VersionDate = "4/24/2016";
+  internal const string VersionDate = "12/16/2017";
   internal const int VersionNumber = 09; // 0.9
-  internal const string MessageBoxTitle = "Code Editor";
-  private Process MSBuildProcess;
+  private System.Threading.Mutex SingleInstanceMutex = null;
+  private bool IsSingleInstance = false;
   private bool IsClosing = false;
-  private ECTime BuildStartTime;
+  private bool Cancelled = false;
   private EditorTabPage[] TabPagesArray;
   private int TabPagesArrayLast = 0;
+  internal const string MessageBoxTitle = "Code Editor";
   private string DataDirectory = "";
-  private EditorTabPage StatusPage;
-  private GlobalProperties GlobalProps;
-  private TextBox SelectedTextBox;
+  private TextBox StatusTextBox;
+  private MSBuilder Builder;
+  private ConfigureFile ConfigFile;
 
 
 
@@ -54,263 +54,43 @@ namespace CodeEditor
     {
     InitializeComponent();
 
-    ///////////////////////
-    // Keep this at the top:
-    SetupDirectories();
-    GlobalProps = new GlobalProperties( this );
-    ///////////////////////
+    if( !CheckSingleInstance())
+      return;
 
-    BuildStartTime = new ECTime();
+    IsSingleInstance = true;
+
+    ///////////
+    // Keep this at the top.
+    SetupDirectories();
+    ConfigFile = new ConfigureFile( DataDirectory + "Config.txt" ); // , this );
+    ///////////
+
+    // ConfigFile.SetString( "CurrentProject", "C:\\Eric\\ClimateModel\\ClimateModel.csproj" );
+    // ConfigFile.SetString( "ProjectDirectory", "C:\\Eric\\ClimateModel\\" );
+    ProjectLabel.Text = "Project: " + Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
+
+    // this.Font = new System.Drawing.Font("Microsoft Sans Serif", 40F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+    this.Font = new System.Drawing.Font( "Consolas", 34.0F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+
+    this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
 
     TabPagesArray = new EditorTabPage[2];
-
     MainTabControl.TabPages.Clear();
 
-    StatusPage = new EditorTabPage( this, "BuildStatus.txt", DataDirectory );
-    TabPagesArray[TabPagesArrayLast] = StatusPage;
-    TabPagesArrayLast++;
-    MainTabControl.TabPages.Add( StatusPage );
-    StatusPage.ClearTextBox();
+    StatusTextBox = new TextBox();
+    AddStatusPage();
+    OpenRecentFiles();
 
-    AddTabPage( "HelloWorld.cs", "C:\\Temp\\" );
-    }
-
-
-
-  private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-    {
-    string ShowS = "Programming by Eric Chauvin." +
-      " Version date: " + VersionDate;
-
-    MessageBox.Show( ShowS, MessageBoxTitle, MessageBoxButtons.OK );
-    }
-
-
-
-
-  internal bool StartMSBuild( string ProjectFileName,
-                              string WorkingDirectory )
-    {
-    try
-    {
-    // Set Envirnment Path to 
-    // c:\Program Files (x86)\MSBuild\14.0\Bin\
-    // MSBuild.exe MyProj.proj /property:Configuration=Debug
-
-    MSBuildProcess = new Process();
-
-    // startInfo.WindowStyle = ProcessWindowStyle.Minimized;
-
-    MSBuildProcess.StartInfo.UseShellExecute = false;
-    MSBuildProcess.StartInfo.WorkingDirectory = WorkingDirectory;
-
-    // /p:Configuration=Release
-    MSBuildProcess.StartInfo.Arguments = "HelloWorld.csproj"; // /?";
-    MSBuildProcess.StartInfo.RedirectStandardOutput = true;
-    MSBuildProcess.StartInfo.RedirectStandardInput = true;
-    MSBuildProcess.StartInfo.FileName = "MSBuild.exe";
-    MSBuildProcess.StartInfo.Verb = ""; // "Print";
-    MSBuildProcess.StartInfo.CreateNoWindow = true;
-    MSBuildProcess.StartInfo.ErrorDialog = false;
-
-    BuildStartTime.SetToNow();
-    MSBuildProcess.Start();
-
-    BuildTimer.Interval = 200;
-    BuildTimer.Start();
-    // WaitForExit() will hold up this main GUI thread.
-
-    return true;
-
-    }
-    catch( Exception Except )
-      {
-      MessageBox.Show( "Could not start the MSBuild program.\r\n\r\n" + Except.Message, MessageBoxTitle, MessageBoxButtons.OK, MessageBoxIcon.Stop );
-      return false;
-      }
-    }
-
-
-
-
-  private void FinishMSBuild()
-    {
-    if( MSBuildProcess == null )
-      {
-      BuildTimer.Stop();
-      return;
-      }
-
-    if( !MSBuildProcess.HasExited )
-      {
-      ShowStatus( "MSBuild seconds: " + BuildStartTime.GetSecondsToNow().ToString( "N2" ) );
-      return;
-      }
-
-    BuildTimer.Stop();
-
-    ShowStatus( "MSBuild has exited." );
-    ShowStatus( " " );
-
-    StreamReader SReader = MSBuildProcess.StandardOutput;
-    while( SReader.Peek() >= 0 ) 
-      {
-      string Line = SReader.ReadLine();
-      if( Line == null )
-        break;
-
-      ShowStatus( Line );
-      }
-
-    MSBuildProcess.Dispose();
-    MSBuildProcess = null;
-
-    ShowStatus( " " );
-    ShowStatus( "Finished with MSBuild." );
-    }
-
-
-
-  private void BuildTimer_Tick(object sender, EventArgs e)
-    {
-    FinishMSBuild();
-    }
-
-
-  internal void ShowStatus( string Status )
-    {
-    if( IsClosing )
-      return;
-
-    StatusPage.AppendToTextBox( Status ); 
-    }
-
-
-
-  private void buildToolStripMenuItem1_Click(object sender, EventArgs e)
-    {
-    // Show the StatusTabPage:
-    MainTabControl.SelectedIndex = 0;
-
-    SaveAllFiles();
-
-    StartMSBuild( "C:\\Temp\\HelloWorld.csproj",
-                  "C:\\Temp" );
-
-    }
-
-
-
-  private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-    {
-    IsClosing = true;
-    KeyboardTimer.Stop();
-    BuildTimer.Stop();
-    SaveAllFiles();
-
-    DisposeOfEverything();
-    }
-
-
-
-
-  internal void StartKeyboardTimer( TextBox UseTextBox )
-    {
-    SelectedTextBox = UseTextBox;
-    KeyboardTimer.Interval = 25;
+    Builder = new MSBuilder( this );
+    KeyboardTimer.Interval = 100;
     KeyboardTimer.Start();
     }
 
 
 
-  private void KeyboardTimer_Tick(object sender, EventArgs e)
+  internal string GetDataDirectory()
     {
-    KeyboardTimer.Stop();
-    if( IsClosing )
-      return;
-
-    if( SelectedTextBox == null )
-      return;
-
-    if( SelectedTextBox.IsDisposed )
-      return;
-
-    // int Start = StatusTextBox.SelectionStart;
-    int Start = SelectedTextBox.GetFirstCharIndexOfCurrentLine();
-    int Line = SelectedTextBox.GetLineFromCharIndex( Start );
-    BottomLabel.Text = "Line: " + Line.ToString( "N0" );
-    }
-
-
-
-  private void AddTabPage( string FileName, string Path )
-    {
-    try
-    {
-    EditorTabPage NewTabPage = new EditorTabPage( this, FileName, Path );
-    TabPagesArray[TabPagesArrayLast] = NewTabPage;
-    TabPagesArrayLast++;
-
-    if( TabPagesArrayLast >= TabPagesArray.Length )
-      {
-      Array.Resize( ref TabPagesArray, TabPagesArray.Length + 16 );
-      }
-
-    MainTabControl.TabPages.Add( NewTabPage );
-
-    // MainTabControl.TabPages.Count
-
-    /*
-
-    MainTabControl.TabPages.Insert( Where, tabPage1 );
-    Remove( tabPage1 );
-    RemoveAt()
-    "To change the order of tabs in the control, you must
-     change their positions in the collection by removing
-      them and inserting them at new indexes."
-
-    */
-
-    }
-    catch( Exception Except )
-      {
-      ShowStatus( "Exception in AddTabPage()." );
-      ShowStatus( Except.Message );
-      }
-    }
-
-
-
-  internal void SaveAllFiles()
-    {
-    for( int Count = 0; Count < TabPagesArrayLast; Count++ )
-      {
-      TabPagesArray[Count].WriteToTextFile();
-      }
-    }
-
-
-
-  private void DisposeOfEverything()
-    {
-    try
-    {
-    MainTabControl.TabPages.Clear();
-
-    for( int Count = 0; Count < TabPagesArrayLast; Count++ )
-      {
-      TabPagesArray[Count].DisposeOfEverything();
-      TabPagesArray[Count] = null;
-      }
-
-    TabPagesArrayLast = 0;
-
-    }
-    catch( Exception )
-      {
-      MessageBox.Show( "Exception in MainForm.DisposeOfEverything().", MessageBoxTitle, MessageBoxButtons.OK );
-      return;
-      }
+    return DataDirectory;
     }
 
 
@@ -320,25 +100,811 @@ namespace CodeEditor
     try
     {
     DataDirectory = Application.StartupPath + "\\Data\\";
-
     if( !Directory.Exists( DataDirectory ))
       Directory.CreateDirectory( DataDirectory );
 
     }
     catch( Exception )
       {
-      MessageBox.Show( "Error: The directory could not be created.", MessageBoxTitle, MessageBoxButtons.OK );
+      MessageBox.Show( "Error: The directory could not be created.", MessageBoxTitle, MessageBoxButtons.OK);
       return;
       }
     }
 
 
 
-  private void saveAllToolStripMenuItem_Click(object sender, EventArgs e)
+
+  internal bool GetIsClosing()
+    {
+    return IsClosing;
+    }
+ 
+ 
+
+  internal void SetCancelled()
+    {
+    Cancelled = true;
+    }
+    
+
+
+  internal bool GetCancelled()
+    {
+    return Cancelled;
+    }
+
+
+
+  internal bool CheckEvents()
+    {
+    if( IsClosing )
+      return false;
+
+    Application.DoEvents();
+
+    if( Cancelled )
+      return false;
+
+    return true;
+    }
+
+
+
+  // This has to be added in the Program.cs file.
+  //   Application.ThreadException += new ThreadExceptionEventHandler( MainForm.UIThreadException );
+  //   Application.SetUnhandledExceptionMode( UnhandledExceptionMode.CatchException );
+
+    // What about this part? 
+    // AppDomain.CurrentDomain.UnhandledException +=
+       //  new UnhandledExceptionEventHandler( CurrentDomain_UnhandledException );
+
+  internal static void UIThreadException( object sender, ThreadExceptionEventArgs t )
+    {
+    string ErrorString = t.Exception.Message;
+
+    try
+      {
+      string ShowString = "There was an unexpected error:\r\n\r\n" +
+             "The program will close now.\r\n\r\n" +
+             ErrorString;
+
+      MessageBox.Show( ShowString, "Program Error", MessageBoxButtons.OK, MessageBoxIcon.Stop );
+      }
+
+    finally
+      {
+      Application.Exit();
+      }
+    }
+
+
+
+
+  private bool CheckSingleInstance()
+    {
+    bool InitialOwner = false; // Owner for single instance check.
+    string ShowS = "Another instance of the Code Editor is already running." +
+      " This instance will close.";
+
+    try
+    {
+    SingleInstanceMutex = new System.Threading.Mutex( true, "Eric's Code Editor Single Instance", out InitialOwner );
+    }
+    catch
+      {
+      MessageBox.Show( ShowS, MessageBoxTitle, MessageBoxButtons.OK, MessageBoxIcon.Stop );
+      // mutex.Close();
+      // mutex = null;
+
+      // Can't do this here:
+      // Application.Exit();
+
+      SingleInstanceTimer.Interval = 50;
+      SingleInstanceTimer.Start();
+      return false;
+      }
+
+    if( !InitialOwner )
+      {
+      MessageBox.Show( ShowS, MessageBoxTitle, MessageBoxButtons.OK, MessageBoxIcon.Stop );
+      // Application.Exit();
+      SingleInstanceTimer.Interval = 50;
+      SingleInstanceTimer.Start();
+      return false;
+      }
+
+    return true;
+    }
+
+
+
+
+  internal void SaveStatusToFile()
+    {
+    try
+    {
+    string FileName = DataDirectory + "MainStatus.txt";
+
+    using( StreamWriter SWriter = new StreamWriter( FileName, false, Encoding.UTF8 ))
+      {
+      foreach( string Line in StatusTextBox.Lines )
+        {
+        SWriter.WriteLine( Line );
+        }
+      }
+
+    // MForm.StartProgramOrFile( FileName );
+    }
+    catch( Exception Except )
+      {
+      ShowStatus( "Error: Could not write the status to the file." );
+      ShowStatus( Except.Message );
+      return;
+      }
+    }
+
+
+
+
+  private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    string ShowS = "Programming by Eric Chauvin." +
+            " Version date: " + VersionDate;
+
+    MessageBox.Show(ShowS, MessageBoxTitle, MessageBoxButtons.OK);
+    }
+
+
+
+
+  private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+    {
+    if( IsSingleInstance )
+      {
+      if( DialogResult.Yes != MessageBox.Show( "Close the program?", MessageBoxTitle, MessageBoxButtons.YesNo, MessageBoxIcon.Question ))
+        {
+        e.Cancel = true;
+        return;
+        }
+      }
+
+    IsClosing = true;
+    KeyboardTimer.Stop();
+    BuildTimer.Stop();
+
+    if( IsSingleInstance )
+      {
+      // SaveAllFiles();
+      DisposeOfEverything();
+      }
+
+
+    /*
+    if( GetURLMgrForm != null )
+      {
+      if( !GetURLMgrForm.IsDisposed )
+        {
+        GetURLMgrForm.Hide();
+        GetURLMgrForm.FreeEverything();
+        GetURLMgrForm.Dispose();
+        }
+
+      GetURLMgrForm = null;
+      }
+      */
+
+    // ShowStatus() won't show it when it's closing.
+    // MainTextBox.AppendText( "Saving files.\r\n" ); 
+    SaveStatusToFile();
+    }
+
+
+
+  private TextBox GetSelectedTextBox()
+    {
+    int SelectedIndex = MainTabControl.SelectedIndex;
+    if( SelectedIndex >= TabPagesArray.Length )
+      return null;
+
+    if( SelectedIndex < 0 )
+      return null;
+
+    TextBox SelectedBox = TabPagesArray[SelectedIndex].MainTextBox;
+    return SelectedBox;
+    }
+
+
+
+  private void KeyboardTimer_Tick(object sender, EventArgs e)
+    {
+    try
+    {
+    KeyboardTimer.Stop();
+    if (IsClosing)
+      return;
+
+    int SelectedIndex = MainTabControl.SelectedIndex;
+    if( SelectedIndex >= TabPagesArray.Length )
+      {
+      CursorLabel.Text = "No textbox selected.";
+      return;
+      }
+
+    if( SelectedIndex < 0 )
+      {
+      CursorLabel.Text = "No textbox selected.";
+      // MessageBox.Show( "There is no tab page selected, or the status page is selected. (Top.)", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    // The status page is at zero.
+    if( SelectedIndex == 0 )
+      {
+      CursorLabel.Text = "Status page.";
+      return;
+      }
+
+    string TabTitle = TabPagesArray[SelectedIndex].TabTitle;
+    // TabPagesArray[SelectedIndex].FileName;
+
+    // GetSelectedTextBox()
+
+    TextBox SelectedTextBox = TabPagesArray[SelectedIndex].MainTextBox;
+
+    if (SelectedTextBox == null)
+      return;
+
+    if (SelectedTextBox.IsDisposed)
+      return;
+
+      // TextBox1.SelectedText
+
+    // "If no text is selected in the control, this
+    // property indicates the insertion point, or
+    // caret, for new text. If you set this property
+    // to a location beyond the length of the text in
+    // the control, the selection start position will
+    // be placed after the last character."
+
+    // "You can programmatically move the caret
+    // within the text box by setting the
+    // SelectionStart to the position within the
+    // text box where you want the caret to move to
+    // and set the SelectionLength property to a
+    // value of zero (0)."
+
+    // "The TextBox must have focus in order for the
+    // selection or the caret to be moved. You can
+    // set the SelectionStart property of a TextBox
+    // that is ReadOnly by giving it the Focus first."
+
+    // SelectedTextBox.SelectionLength
+
+    int Start = SelectedTextBox.SelectionStart;
+    // int Start2 = SelectedTextBox.GetFirstCharIndexOfCurrentLine();
+    int Line = SelectedTextBox.GetLineFromCharIndex( Start );
+
+    // TextBox.AppendText()
+    // TextBox.SelectAll()
+
+    CursorLabel.Text = "Line: " + Line.ToString("N0") + "     " + TabTitle;
+
+    KeyboardTimer.Start();
+    }
+    catch( Exception Except )
+      {
+      MessageBox.Show( "Exception in MainForm.KeyboardTimer_Tick(). " + Except.Message, MessageBoxTitle, MessageBoxButtons.OK);
+      return;
+      }
+    }
+
+
+
+
+  internal void ShowStatus(string Status)
+    {
+    if (IsClosing)
+      return;
+    
+    StatusTextBox.AppendText( Status + "\r\n" ); 
+    }
+
+
+
+
+  private void DisposeOfEverything()
+    {
+    try
+    {
+    if( Builder != null )
+      Builder.DisposeOfEverything();
+
+    // Dispose of TextBoxes, etc?
+
+
+    for (int Count = 0; Count < TabPagesArrayLast; Count++)
+      {
+      // And the tab pages?
+      TabPagesArray[Count].MainTextBox.Dispose();
+      // TabPagesArray[Count] = null;
+      }
+
+    StatusTextBox.Dispose();
+
+    // Does this dispose of its owned objects?
+    MainTabControl.TabPages.Clear();
+
+    TabPagesArrayLast = 0;
+    }
+    catch( Exception Except )
+      {
+      MessageBox.Show( "Exception in MainForm.DisposeOfEverything(). " + Except.Message, MessageBoxTitle, MessageBoxButtons.OK);
+      return;
+      }
+    }
+
+
+
+  private void SingleInstanceTimer_Tick(object sender, EventArgs e)
+    {
+    SingleInstanceTimer.Stop();
+    Application.Exit();
+    }
+
+
+
+
+  private void AddStatusPage()
+    {
+    try
+    {
+    TabPage TabPageS = new TabPage();
+
+    StatusTextBox.AcceptsReturn = true;
+    StatusTextBox.BackColor = System.Drawing.Color.Black;
+    StatusTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+    // StatusTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+    StatusTextBox.ForeColor = System.Drawing.Color.White;
+    StatusTextBox.Location = new System.Drawing.Point(3, 3);
+    StatusTextBox.Multiline = true;
+    TextBox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+    TextBox1.WordWrap = false;
+    StatusTextBox.Name = "TextBox1";
+    StatusTextBox.Size = new System.Drawing.Size(781, 219);
+    StatusTextBox.TabIndex = 0;
+
+    TabPageS.Controls.Add( StatusTextBox );
+    // TabPage1.Location = new System.Drawing.Point(4, 63);
+    TabPageS.Name = "StatusTabPage";
+    TabPageS.Padding = new System.Windows.Forms.Padding(3);
+    TabPageS.Size = new System.Drawing.Size(787, 225);
+    TabPageS.TabIndex = 0;
+    TabPageS.Text = "Status";
+    TabPageS.UseVisualStyleBackColor = true;
+ 
+    MainTabControl.TabPages.Add( TabPageS );
+    EditorTabPage NewPage = new EditorTabPage( this, "Status", DataDirectory + "Status.txt", StatusTextBox );
+    TabPagesArray[TabPagesArrayLast] = NewPage;
+    TabPagesArrayLast++;
+
+    }
+    catch( Exception Except )
+      {
+      MessageBox.Show( "Exception in MainForm.AddStatusPage(). " + Except.Message, MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+    }
+
+
+
+  private void OpenRecentFiles()
+    {
+    for( int Count = 1; Count <= 20; Count++ )
+      {
+      string FileName = ConfigFile.GetString( "RecentFile" + Count.ToString() );
+      if( FileName.Length < 1 )
+        break;
+
+      string TabTitle = Path.GetFileName( FileName );
+      AddNewPage( TabTitle, FileName );
+      }
+    }
+
+
+
+  private void AddNewPage( string TabTitle, string FileName )
+    {
+    try
+    {
+    TabPage TabPage1 = new TabPage();
+    TextBox TextBox1 = new TextBox();
+
+    TextBox1.AcceptsReturn = true;
+    TextBox1.BackColor = System.Drawing.Color.Black;
+    TextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+    // TextBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+    TextBox1.ForeColor = System.Drawing.Color.White;
+    TextBox1.Location = new System.Drawing.Point(3, 3);
+    TextBox1.Multiline = true;
+    TextBox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+    TextBox1.WordWrap = false;
+    TextBox1.MaxLength = 1000000000;
+    TextBox1.Name = "TextBox1";
+    TextBox1.Size = new System.Drawing.Size(781, 219);
+    TextBox1.TabIndex = 0;
+
+    TabPage1.Controls.Add( TextBox1 );
+    // TabPage1.Location = new System.Drawing.Point(4, 63);
+    TabPage1.Name = "tabPage1";
+    TabPage1.Padding = new System.Windows.Forms.Padding(3);
+    TabPage1.Size = new System.Drawing.Size(787, 225);
+    TabPage1.TabIndex = 0;
+    TabPage1.Text = TabTitle;
+    TabPage1.UseVisualStyleBackColor = true;
+ 
+    MainTabControl.TabPages.Add( TabPage1 );
+
+    EditorTabPage NewPage = new EditorTabPage( this, TabTitle, FileName, TextBox1 );
+    TabPagesArray[TabPagesArrayLast] = NewPage;
+
+    ConfigFile.SetString( "RecentFile" + TabPagesArrayLast.ToString(), FileName );
+
+    TabPagesArrayLast++;
+
+    if( TabPagesArrayLast >= TabPagesArray.Length )
+      {
+      Array.Resize( ref TabPagesArray, TabPagesArray.Length + 16 );
+      }
+
+    // TabPages.Insert( Where, tabPage1 );
+    // Remove( tabPage1 );
+    // RemoveAt()
+
+    MainTabControl.SelectedIndex = MainTabControl.TabPages.Count - 1;
+
+    }
+    catch( Exception Except )
+      {
+      MessageBox.Show( "Exception in MainForm.AddNewPage(). " + Except.Message, MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+    }
+
+
+
+  private void buildToolStripMenuItem1_Click(object sender, EventArgs e)
+    {
+    Cancelled = false;
+    // Show the StatusTabPage:
+    MainTabControl.SelectedIndex = 0;
+
+    // SaveAllFiles();
+
+    string ProjectFileName = ConfigFile.GetString( "CurrentProject" );
+    string ProjectDirectory = ConfigFile.GetString( "ProjectDirectory" );
+    Builder.StartMSBuild( ProjectFileName, ProjectDirectory );
+
+    BuildTimer.Interval = 500;
+    BuildTimer.Start();
+    }
+
+
+
+
+  private void BuildTimer_Tick(object sender, EventArgs e)
+    {
+    try
+    {
+    // ShowStatus( "Build Timer." );
+    if( Builder == null )
+      return;
+
+    if( Cancelled )
+      {
+      // Close the builder.
+      return;
+      }
+
+    if( Builder.IsMSBuildFinished())
+      {
+      BuildTimer.Stop();
+      ShowStatus( "Build finished." );
+      return;
+      }
+
+    // ShowStatus( "Build is not finished." );
+    }
+    catch( Exception Except )
+      {
+      ShowStatus( "Exception in MainForm.BuildTimer_Tick(). " + Except.Message );
+      return;
+      }
+    }
+
+
+
+  private void MainForm_KeyDown(object sender, KeyEventArgs e)
+    {
+    if( e.KeyCode == Keys.Escape ) //  && (e.Alt || e.Control || e.Shift))
+      {
+      ShowStatus( "Cancelled." );
+      if( Builder != null )
+        {
+        Builder.ShowMSBuildLines();
+        Builder.DisposeOfEverything();
+        }
+
+      Cancelled = true;
+      }
+    }
+
+
+
+
+  private void openToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    OpenFileDialog1.Title = "Code Editor";
+    OpenFileDialog1.InitialDirectory = DataDirectory;
+
+    if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
+      return;
+
+    string TabTitle = Path.GetFileName( OpenFileDialog1.FileName );
+    string FileName = OpenFileDialog1.FileName;
+    AddNewPage( TabTitle, FileName );
+    }
+
+
+
+
+  private void showNonAsciiToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    /*
+    Symbols:
+        General Punctuation (2000–206F)
+        Superscripts and Subscripts (2070–209F)
+        Currency Symbols (20A0–20CF)
+        Combining Diacritical Marks for Symbols (20D0–20FF)
+        Letterlike Symbols (2100–214F)
+        Number Forms (2150–218F)
+        Arrows (2190–21FF)
+        Mathematical Operators (2200–22FF)
+        Miscellaneous Technical (2300–23FF)
+        Control Pictures (2400–243F)
+        Optical Character Recognition (2440–245F)
+        Enclosed Alphanumerics (2460–24FF)
+        Box Drawing (2500–257F)
+        Block Elements (2580–259F)
+        Geometric Shapes (25A0–25FF)
+        Miscellaneous Symbols (2600–26FF)
+        Dingbats (2700–27BF)
+        Miscellaneous Mathematical Symbols-A (27C0–27EF)
+        Supplemental Arrows-A (27F0–27FF)
+        Braille Patterns (2800–28FF)
+        Supplemental Arrows-B (2900–297F)
+        Miscellaneous Mathematical Symbols-B (2980–29FF)
+        Supplemental Mathematical Operators (2A00–2AFF)
+        Miscellaneous Symbols and Arrows (2B00–2BFF)
+
+    // See the MarkersDelimiters.cs file.
+    // Don't exclude any characters in the Basic
+    // Multilingual Plane except these Dingbat characters
+    // which are used as markers or delimiters.
+
+    //    Dingbats (2700–27BF)
+
+    // for( int Count = 0x2700; Count < 0x27BF; Count++ )
+      // ShowStatus( Count.ToString( "X2" ) + ") " + Char.ToString( (char)Count ));
+
+    // for( int Count = 128; Count < 256; Count++ )
+      // ShowStatus( "      case (int)'" + Char.ToString( (char)Count ) + "': return " + Count.ToString( "X4" ) + ";" );
+
+
+    // for( int Count = 32; Count < 256; Count++ )
+      // ShowStatus( "    CharacterArray[" + Count.ToString() + "] = '" + Char.ToString( (char)Count ) + "';  //  0x" + Count.ToString( "X2" ) );
+
+     // &#147;
+
+    // ShowStatus( " " );
+    */
+
+    int GetVal = 0x252F; // 0x201c;
+    ShowStatus( "Character: " + Char.ToString( (char)GetVal ));
+    }
+
+
+
+  private void saveToolStripMenuItem_Click(object sender, EventArgs e)
     {
     SaveAllFiles();
     }
 
+
+
+  private void SaveAllFiles()
+    {
+    if( TabPagesArrayLast < 1 )
+      return;
+
+    for( int Count = 1; Count < TabPagesArrayLast; Count++ )
+      {
+      TabPagesArray[Count].WriteToTextFile();
+      }
+    }
+
+
+
+  private void CloseAllFiles()
+    {
+    // Don't save anything automatically.
+    // SaveAllFiles();
+
+    // Dispose of text boxes, etc?
+    for( int Count = 1; Count <= 20; Count++ )
+      {
+      ConfigFile.SetString( "RecentFile" + Count.ToString(), "" );
+      }
+
+    for (int Count = 0; Count < TabPagesArrayLast; Count++)
+      {
+      // TabPagesArray[Count].DisposeOfEverything();
+      // TabPagesArray[Count] = null;
+      }
+
+    MainTabControl.TabPages.Clear();
+    TabPagesArrayLast = 0;
+
+    AddStatusPage();
+    }
+
+
+
+  private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    Close();
+    }
+
+
+
+
+  private void closeAllToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    CloseAllFiles();
+    }
+
+
+
+  private void saveFileAsToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    int SelectedIndex = MainTabControl.SelectedIndex;
+    if( SelectedIndex >= TabPagesArray.Length )
+      {
+      MessageBox.Show( "The selected index is past the TabPagesArray length.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    // The status page is at zero.
+    if( SelectedIndex <= 0 )
+      {
+      MessageBox.Show( "There is no tab page selected, or the status page is selected. (Top.)", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    SaveFileDialog1.Title = TabPagesArray[SelectedIndex].TabTitle;
+    SaveFileDialog1.InitialDirectory = DataDirectory;
+
+    if( SaveFileDialog1.ShowDialog() != DialogResult.OK )
+      return;
+
+    TabPagesArray[SelectedIndex].TabTitle = Path.GetFileName( SaveFileDialog1.FileName );
+    TabPagesArray[SelectedIndex].FileName = SaveFileDialog1.FileName;
+    TabPagesArray[SelectedIndex].WriteToTextFile();
+    MainTabControl.TabPages[SelectedIndex].Text = TabPagesArray[SelectedIndex].TabTitle;
+
+    ConfigFile.SetString( "RecentFile" + SelectedIndex.ToString(), TabPagesArray[SelectedIndex].FileName );
+    }
+
+
+
+  private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    TextBox SelectedBox = GetSelectedTextBox();
+    if( SelectedBox == null )
+      return;
+
+    if( SelectedBox.SelectionLength < 1 )
+      return;
+
+    SelectedBox.Copy();
+  
+    // .Paste();
+    // If SelectionLength is not zero this will paste
+    // over (replace) the current selection.
+    }
+
+
+
+  private void cutToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    TextBox SelectedBox = GetSelectedTextBox();
+    if( SelectedBox == null )
+      return;
+
+    if( SelectedBox.SelectionLength < 1 )
+      return;
+
+    SelectedBox.Cut();
+    }
+
+
+
+  private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    TextBox SelectedBox = GetSelectedTextBox();
+    if( SelectedBox == null )
+      return;
+
+    // if( SelectedBox.SelectionLength < 1 )
+      // return;
+
+    SelectedBox.SelectAll();
+    }
+
+
+
+
+  private void setCurrentProjectToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    OpenFileDialog1.Title = "Code Editor";
+    OpenFileDialog1.InitialDirectory = DataDirectory;
+
+    if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
+      return;
+
+    string ProjectFile = OpenFileDialog1.FileName;
+    string WorkingDir = Path.GetFullPath( ProjectFile );
+    ConfigFile.SetString( "CurrentProject", ProjectFile );
+    ConfigFile.SetString( "ProjectDirectory", WorkingDir );
+
+    ProjectLabel.Text = "Project: " + Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
+    }
+
+
+
+
+    /*
+      internal void SearchWebPagesDirectory()
+        {
+        try
+        {
+        WebFilesDictionary.Clear();
+
+        string[] FileEntries = Directory.GetFiles( MForm.GetWebPagesDirectory(), "*.*" );
+
+        foreach( string FileName in FileEntries )
+          {
+          string ShortName = FileName.Replace( MForm.GetWebPagesDirectory(), "" );
+          ShortName = ShortName.ToLower();
+
+          if( !MForm.CheckEvents())
+            return;
+
+          }
+
+        string [] SubDirEntries = Directory.GetDirectories( Name );
+        foreach( string SubDir in SubDirEntries )
+          {
+          Do a recursive search through sub directories.
+          ProcessOneDirectory( SubDir );
+          }
+        }
+        catch( Exception Except )
+          {
+          MForm.ShowWebListenerFormStatus( "Exception in SearchWebPagesDirectory():" );
+          MForm.ShowWebListenerFormStatus( Except.Message );
+          }
+        }
+        */
 
 
   }
