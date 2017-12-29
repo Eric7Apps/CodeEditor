@@ -1,19 +1,16 @@
-// Programming by Eric Chauvin.
+// Copyright Eric Chauvin 2017 - 2018.
 // My blog is at:
 // ericsourcecode.blogspot.com
+
+
+// Csc.exe is in the same directory as the
+// MSBuild.exe file.
 
 
 // Microsoft Visual Studio has gotten too _helpful_,
 // with the Clippy character lightbulb and all the other
 // stuff flashing on the screen.  So I wanted to have
 // a basic code editor without all of the distractions.
-
-// I also wanted to have the menu font sizes big
-// enough so I can see them easily.
-
-// This calls MSBuild to build programs written in C#,
-// but this is also going to be used for Android/Gradle
-// and my C++ compiler.
 
 
 using System;
@@ -34,7 +31,7 @@ namespace CodeEditor
 {
   public partial class MainForm : Form
   {
-  internal const string VersionDate = "12/16/2017";
+  internal const string VersionDate = "12/29/2017";
   internal const int VersionNumber = 09; // 0.9
   private System.Threading.Mutex SingleInstanceMutex = null;
   private bool IsSingleInstance = false;
@@ -47,7 +44,8 @@ namespace CodeEditor
   private TextBox StatusTextBox;
   private MSBuilder Builder;
   private ConfigureFile ConfigFile;
-
+  private string CurrentProjectText = "";
+  private string SearchText = "";
 
 
   public MainForm()
@@ -65,9 +63,14 @@ namespace CodeEditor
     ConfigFile = new ConfigureFile( DataDirectory + "Config.txt" ); // , this );
     ///////////
 
+
     // ConfigFile.SetString( "CurrentProject", "C:\\Eric\\ClimateModel\\ClimateModel.csproj" );
     // ConfigFile.SetString( "ProjectDirectory", "C:\\Eric\\ClimateModel\\" );
-    ProjectLabel.Text = "Project: " + Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
+
+
+    string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
+    ShowS = ShowS.Replace( ".csproj", "" );
+    CurrentProjectText = ShowS;
 
     // this.Font = new System.Drawing.Font("Microsoft Sans Serif", 40F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
     this.Font = new System.Drawing.Font( "Consolas", 34.0F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
@@ -153,11 +156,9 @@ namespace CodeEditor
   // This has to be added in the Program.cs file.
   //   Application.ThreadException += new ThreadExceptionEventHandler( MainForm.UIThreadException );
   //   Application.SetUnhandledExceptionMode( UnhandledExceptionMode.CatchException );
-
     // What about this part? 
     // AppDomain.CurrentDomain.UnhandledException +=
        //  new UnhandledExceptionEventHandler( CurrentDomain_UnhandledException );
-
   internal static void UIThreadException( object sender, ThreadExceptionEventArgs t )
     {
     string ErrorString = t.Exception.Message;
@@ -319,7 +320,7 @@ namespace CodeEditor
     {
     try
     {
-    KeyboardTimer.Stop();
+    // KeyboardTimer.Stop();
     if (IsClosing)
       return;
 
@@ -347,49 +348,22 @@ namespace CodeEditor
     string TabTitle = TabPagesArray[SelectedIndex].TabTitle;
     // TabPagesArray[SelectedIndex].FileName;
 
-    // GetSelectedTextBox()
-
     TextBox SelectedTextBox = TabPagesArray[SelectedIndex].MainTextBox;
-
     if (SelectedTextBox == null)
       return;
 
     if (SelectedTextBox.IsDisposed)
       return;
 
-      // TextBox1.SelectedText
-
-    // "If no text is selected in the control, this
-    // property indicates the insertion point, or
-    // caret, for new text. If you set this property
-    // to a location beyond the length of the text in
-    // the control, the selection start position will
-    // be placed after the last character."
-
-    // "You can programmatically move the caret
-    // within the text box by setting the
-    // SelectionStart to the position within the
-    // text box where you want the caret to move to
-    // and set the SelectionLength property to a
-    // value of zero (0)."
-
-    // "The TextBox must have focus in order for the
-    // selection or the caret to be moved. You can
-    // set the SelectionStart property of a TextBox
-    // that is ReadOnly by giving it the Focus first."
-
-    // SelectedTextBox.SelectionLength
-
     int Start = SelectedTextBox.SelectionStart;
     // int Start2 = SelectedTextBox.GetFirstCharIndexOfCurrentLine();
-    int Line = SelectedTextBox.GetLineFromCharIndex( Start );
 
-    // TextBox.AppendText()
-    // TextBox.SelectAll()
+    // The +1 is for display and matching with 
+    // the compiler error line number.
+    int Line = 1 + SelectedTextBox.GetLineFromCharIndex( Start );
+    CursorLabel.Text = "Line: " + Line.ToString("N0") + "     " + TabTitle + "      Proj: " + CurrentProjectText;
 
-    CursorLabel.Text = "Line: " + Line.ToString("N0") + "     " + TabTitle;
-
-    KeyboardTimer.Start();
+    // KeyboardTimer.Start();
     }
     catch( Exception Except )
       {
@@ -420,7 +394,7 @@ namespace CodeEditor
       Builder.DisposeOfEverything();
 
     // Dispose of TextBoxes, etc?
-
+    // Does the TabControl own these components?
 
     for (int Count = 0; Count < TabPagesArrayLast; Count++)
       {
@@ -481,6 +455,7 @@ namespace CodeEditor
     TabPageS.TabIndex = 0;
     TabPageS.Text = "Status";
     TabPageS.UseVisualStyleBackColor = true;
+    TabPageS.Enter += new System.EventHandler( this.tabPage_Enter );
  
     MainTabControl.TabPages.Add( TabPageS );
     EditorTabPage NewPage = new EditorTabPage( this, "Status", DataDirectory + "Status.txt", StatusTextBox );
@@ -541,13 +516,14 @@ namespace CodeEditor
     TabPage1.TabIndex = 0;
     TabPage1.Text = TabTitle;
     TabPage1.UseVisualStyleBackColor = true;
+    TabPage1.Enter += new System.EventHandler( this.tabPage_Enter );
  
     MainTabControl.TabPages.Add( TabPage1 );
 
     EditorTabPage NewPage = new EditorTabPage( this, TabTitle, FileName, TextBox1 );
     TabPagesArray[TabPagesArrayLast] = NewPage;
 
-    ConfigFile.SetString( "RecentFile" + TabPagesArrayLast.ToString(), FileName );
+    ConfigFile.SetString( "RecentFile" + TabPagesArrayLast.ToString(), FileName, true );
 
     TabPagesArrayLast++;
 
@@ -557,11 +533,8 @@ namespace CodeEditor
       }
 
     // TabPages.Insert( Where, tabPage1 );
-    // Remove( tabPage1 );
-    // RemoveAt()
 
     MainTabControl.SelectedIndex = MainTabControl.TabPages.Count - 1;
-
     }
     catch( Exception Except )
       {
@@ -601,7 +574,8 @@ namespace CodeEditor
 
     if( Cancelled )
       {
-      // Close the builder.
+      BuildTimer.Stop();
+      Builder.DisposeOfEverything();
       return;
       }
 
@@ -644,7 +618,7 @@ namespace CodeEditor
   private void openToolStripMenuItem_Click(object sender, EventArgs e)
     {
     OpenFileDialog1.Title = "Code Editor";
-    OpenFileDialog1.InitialDirectory = DataDirectory;
+    OpenFileDialog1.InitialDirectory = "C:\\Eric\\"; // DataDirectory;
 
     if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
       return;
@@ -729,7 +703,11 @@ namespace CodeEditor
     for( int Count = 1; Count < TabPagesArrayLast; Count++ )
       {
       TabPagesArray[Count].WriteToTextFile();
+      string FileName = TabPagesArray[Count].FileName;
+      ConfigFile.SetString( "RecentFile" + Count.ToString(), FileName, false );
       }
+
+    ConfigFile.WriteToTextFile();
     }
 
 
@@ -742,8 +720,10 @@ namespace CodeEditor
     // Dispose of text boxes, etc?
     for( int Count = 1; Count <= 20; Count++ )
       {
-      ConfigFile.SetString( "RecentFile" + Count.ToString(), "" );
+      ConfigFile.SetString( "RecentFile" + Count.ToString(), "", false );
       }
+
+    ConfigFile.WriteToTextFile();
 
     for (int Count = 0; Count < TabPagesArrayLast; Count++)
       {
@@ -755,6 +735,56 @@ namespace CodeEditor
     TabPagesArrayLast = 0;
 
     AddStatusPage();
+    }
+
+
+
+  private void CloseCurrentFile()
+    {
+    // Don't save anything automatically.
+    // SaveAllFiles();
+
+    if( TabPagesArrayLast < 2 )
+      return;
+
+    int SelectedIndex = MainTabControl.SelectedIndex;
+    if( SelectedIndex < 1 )
+      return;
+
+    if( SelectedIndex >= TabPagesArrayLast )
+      return;
+
+    for( int Count = SelectedIndex; (Count + 1) < TabPagesArrayLast; Count++ )
+      {
+      TabPagesArray[Count] = TabPagesArray[Count + 1];
+      }
+
+    TabPagesArray[TabPagesArrayLast - 1] = null;
+    TabPagesArrayLast--;
+
+    // TabPagesArray[SelectedIndex].DisposeOfEverything();
+
+    MainTabControl.TabPages.RemoveAt( SelectedIndex );
+    // Now the TabControl has a new SelectedIndex.
+    // Or None.
+    if( MainTabControl.SelectedIndex < 0 )
+      MainTabControl.SelectedIndex = 0;
+
+    if( MainTabControl.SelectedIndex >= TabPagesArrayLast )
+      MainTabControl.SelectedIndex = TabPagesArrayLast - 1;
+
+    for( int Count = 1; Count < TabPagesArrayLast; Count++ )
+      {
+      string FileName = TabPagesArray[Count].FileName;
+      ConfigFile.SetString( "RecentFile" + Count.ToString(), FileName, false );
+      }
+
+    // Clear that one on the end.
+    ConfigFile.SetString( "RecentFile" + TabPagesArrayLast.ToString(), "", false );
+    ConfigFile.WriteToTextFile();
+
+    TextBox NewSelectedBox = TabPagesArray[MainTabControl.SelectedIndex].MainTextBox;
+    NewSelectedBox.Select();
     }
 
 
@@ -801,7 +831,7 @@ namespace CodeEditor
     TabPagesArray[SelectedIndex].WriteToTextFile();
     MainTabControl.TabPages[SelectedIndex].Text = TabPagesArray[SelectedIndex].TabTitle;
 
-    ConfigFile.SetString( "RecentFile" + SelectedIndex.ToString(), TabPagesArray[SelectedIndex].FileName );
+    ConfigFile.SetString( "RecentFile" + SelectedIndex.ToString(), TabPagesArray[SelectedIndex].FileName, true );
     }
 
 
@@ -856,26 +886,199 @@ namespace CodeEditor
   private void setCurrentProjectToolStripMenuItem_Click(object sender, EventArgs e)
     {
     OpenFileDialog1.Title = "Code Editor";
-    OpenFileDialog1.InitialDirectory = DataDirectory;
+    OpenFileDialog1.InitialDirectory = "C:\\Eric\\"; // DataDirectory;
 
     if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
       return;
 
     string ProjectFile = OpenFileDialog1.FileName;
-    string WorkingDir = Path.GetFullPath( ProjectFile );
-    ConfigFile.SetString( "CurrentProject", ProjectFile );
-    ConfigFile.SetString( "ProjectDirectory", WorkingDir );
+    string WorkingDir = Path.GetDirectoryName( ProjectFile );
+    ConfigFile.SetString( "CurrentProject", ProjectFile, true );
+    ConfigFile.SetString( "ProjectDirectory", WorkingDir, true );
 
-    ProjectLabel.Text = "Project: " + Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
+    // MessageBox.Show( "Project Directory: " + ConfigFile.GetString( "ProjectDirectory" ), MessageBoxTitle, MessageBoxButtons.OK );
+
+    string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
+    ShowS = ShowS.Replace( ".csproj", "" );
+    CurrentProjectText = ShowS;
     }
+
+
+
+
+  private void findToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    int SelectedIndex = MainTabControl.SelectedIndex;
+    if( SelectedIndex >= TabPagesArray.Length )
+      {
+      MessageBox.Show( "No text box selected.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    if( SelectedIndex < 0 )
+      {
+      MessageBox.Show( "No text box selected.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    SearchForm SForm = new SearchForm();
+    // try
+    SForm.ShowDialog();
+    if( SForm.DialogResult == DialogResult.Cancel )
+      return;
+
+    SearchText = SForm.GetSearchText().Trim().ToLower();
+    if( SearchText.Length < 1 )
+      {
+      MessageBox.Show( "No search text entered.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    TextBox SelectedBox = TabPagesArray[SelectedIndex].MainTextBox;
+    if( SelectedBox == null )
+      return;
+
+    // It has to have the focus in order to set
+    // SelectionStart.
+    SelectedBox.Select();
+
+    SelectedBox.SelectionLength = 0;
+    int Start = SelectedBox.SelectionStart;
+    if( Start < 0 )
+      Start = 0;
+
+    string TextS = SelectedBox.Text.ToLower();
+    int TextLength = TextS.Length;
+    for( int Count = Start; Count < TextLength; Count++ )
+      {
+      if( TextS[Count] == SearchText[0] )
+        {
+        int Where = SearchTextMatches( Count, TextS, SearchText );
+        if( Where >= 0 )
+          {
+          // MessageBox.Show( "Found at: " + Where.ToString(), MessageBoxTitle, MessageBoxButtons.OK );
+          SelectedBox.SelectionStart = Where;
+          return;
+          }
+        }
+      }
+
+    MessageBox.Show( "Nothing found.", MessageBoxTitle, MessageBoxButtons.OK );
+    }
+
+
+
+
+  private int SearchTextMatches( int Position, string TextToSearch, string SearchText )
+    {
+    int SLength = SearchText.Length;
+    if( SLength < 1 )
+      return -1;
+
+    if( (Position + SLength - 1) >= TextToSearch.Length )
+      return -1;
+
+    for( int Count = 0; Count < SLength; Count++ )
+      {
+      if( SearchText[Count] != TextToSearch[Position + Count] )
+        return -1;
+
+      }
+
+    return Position;
+    }
+
+
+
+
+  private void findNextToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    int SelectedIndex = MainTabControl.SelectedIndex;
+    if( SelectedIndex >= TabPagesArray.Length )
+      {
+      MessageBox.Show( "No text box selected.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    if( SelectedIndex < 0 )
+      {
+      MessageBox.Show( "No text box selected.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    // SearchText = SForm.GetSearchText().Trim().ToLower();
+    if( SearchText.Length < 1 )
+      {
+      MessageBox.Show( "No search text entered.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    TextBox SelectedBox = TabPagesArray[SelectedIndex].MainTextBox;
+    if( SelectedBox == null )
+      return;
+
+    // It has to have the focus in order to set
+    // SelectionStart.
+    SelectedBox.Select();
+
+    SelectedBox.SelectionLength = 0;
+    int Start = SelectedBox.SelectionStart;
+    if( Start < 0 )
+      Start = 0;
+
+    Start = Start + SearchText.Length;
+
+    string TextS = SelectedBox.Text.ToLower();
+    int TextLength = TextS.Length;
+    for( int Count = Start; Count < TextLength; Count++ )
+      {
+      if( TextS[Count] == SearchText[0] )
+        {
+        int Where = SearchTextMatches( Count, TextS, SearchText );
+        if( Where >= 0 )
+          {
+          // MessageBox.Show( "Found at: " + Where.ToString(), MessageBoxTitle, MessageBoxButtons.OK );
+          SelectedBox.SelectionStart = Where;
+          return;
+          }
+        }
+      }
+
+    MessageBox.Show( "Nothing found.", MessageBoxTitle, MessageBoxButtons.OK );
+    }
+
+
+
+
+  private void tabPage_Enter(object sender, EventArgs e)
+    {
+    int SelectedIndex = MainTabControl.SelectedIndex;
+    if( SelectedIndex >= TabPagesArray.Length )
+      return;
+
+    if( SelectedIndex < 0 )
+      return;
+
+    // Get the index and then set the focus.
+    TextBox SelectedBox = TabPagesArray[SelectedIndex].MainTextBox;
+    SelectedBox.Select();
+    }
+
+
+
+  private void closeCurrentToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    CloseCurrentFile();
+    }
+
 
 
 
 
     /*
       internal void SearchWebPagesDirectory()
-        {
-        try
+        
+      try
         {
         WebFilesDictionary.Clear();
 
