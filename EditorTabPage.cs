@@ -24,6 +24,7 @@ namespace CodeEditor
   internal string FileName = "";
   internal string TabTitle = "";
   internal TextBox MainTextBox;
+  // internal int SearchPosition = -1;
 
 
 
@@ -68,11 +69,14 @@ namespace CodeEditor
         // if( Line == "" )
           // continue;
 
+        Line = Line.Replace( "\t", "  " );
+
         SBuilder.Append( Line + "\r\n" );
         }
       }
 
     MainTextBox.Text = SBuilder.ToString();
+    return true;
     }
     catch( Exception Except )
       {
@@ -80,8 +84,6 @@ namespace CodeEditor
       MForm.ShowStatus( Except.Message );
       return false;
       }
-
-    return true;
     }
 
 
@@ -105,6 +107,8 @@ namespace CodeEditor
 
       // SWriter.WriteLine( " " );
       }
+
+    return true;
     }
     catch( Exception Except )
       {
@@ -113,8 +117,6 @@ namespace CodeEditor
       MForm.ShowStatus( Except.Message );
       return false;
       }
-
-    return true;
     }
 
 
