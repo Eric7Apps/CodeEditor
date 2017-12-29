@@ -1,4 +1,4 @@
-// Programming by Eric Chauvin.
+// Copyright Eric Chauvin 2017 - 2018.
 // My blog is at:
 // ericsourcecode.blogspot.com
 
@@ -90,7 +90,6 @@ namespace CodeEditor
     // MSBuild.exe MyProj.csproj
 
     string MSBuildFile = "c:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\MSBuild.exe";
-    // string MSBuildFile = "c:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\MSBuild.exe";
     MSBuildProcess.StartInfo.FileName = MSBuildFile; // "MSBuild.exe";
     MSBuildProcess.StartInfo.Verb = ""; // "Print";
     MSBuildProcess.StartInfo.CreateNoWindow = true;
@@ -106,6 +105,12 @@ namespace CodeEditor
       {
       MForm.ShowStatus( "Could not start the MSBuild program." );
       MForm.ShowStatus( Except.Message );
+      if( MSBuildProcess != null )
+        {
+        MSBuildProcess.Dispose();
+        MSBuildProcess = null;
+        }
+
       return false;
       }
     }
@@ -120,9 +125,7 @@ namespace CodeEditor
     if( MSBuildProcess == null )
       return true;
 
-    // ===== Does the standard out file size change?
-
-    MSBuildProcess.Refresh();
+    // MSBuildProcess.Refresh();
     // "After Refresh is called, the first request
     // for information about each property causes the
     // process component to obtain a new value from
@@ -140,7 +143,7 @@ namespace CodeEditor
 
     if( !MSBuildProcess.HasExited )
       {
-      ShowMSBuildLines();
+      // Don't do this here.  ShowMSBuildLines();
       MForm.ShowStatus( " " );
       MForm.ShowStatus( "MSBuild seconds: " + BuildStartTime.GetSecondsToNow().ToString("N2") );
       // MForm.ShowStatus( " " );
@@ -189,50 +192,11 @@ namespace CodeEditor
     if( MSBuildProcess == null )
       return;
 
-    // "The redirected StandardOutput stream can be
-    // read synchronously or asynchronously. Methods
-    // such as Read, ReadLine, and ReadToEnd perform
-    // synchronous read operations on the output
-    // stream of the process. These synchronous read
-    // operations do not complete until the associated
-    // Process writes to its StandardOutput stream, or
-    // closes the stream."
-
-    // "In contrast, BeginOutputReadLine starts
-    // asynchronous read operations on the
-    // StandardOutput stream. This method enables a
-    // designated event handler for the stream output
-    // and immediately returns to the caller, which
-    // can perform other work while the stream output
-    // is directed to the event handler.
-    // Synchronous read operations introduce a
+    // "Synchronous read operations introduce a
     // dependency between the caller reading from the
     // StandardOutput stream and the child process
     // writing to that stream. These dependencies can
-    // result in deadlock conditions. When the caller
-    // reads from the redirected stream of a child
-    // process, it is dependent on the child. The
-    // caller waits on the read operation until the
-    // child writes to the stream or closes the stream.
-    // When the child process writes enough data to
-    // fill its redirected stream, it is dependent on
-    // the parent. The child process waits on the
-    // next write operation until the parent reads
-    // from the full stream or closes the stream. The
-    // deadlock condition results when the caller and
-    // child process wait on each other to complete
-    // an operation, and neither can proceed. You can
-    // avoid deadlocks by evaluating dependencies
-    // between the caller and child process. 
-    // The following C# code, for example, shows how
-    // to read from a redirected stream and wait for
-    // the child process to exit."
-
-    // To avoid deadlocks, always read the output
-    // stream first and then wait.  
-    // string output = p.StandardOutput.ReadToEnd();  
-    // p.WaitForExit();  
-
+    // result in deadlock conditions."
 
     // Refresh();
     StreamReader SReader = MSBuildProcess.StandardOutput;
@@ -241,10 +205,7 @@ namespace CodeEditor
       string Line = SReader.ReadLine();
       // string Line = SReader.ReadToEnd();
       if( Line == null )
-        break;
-
-      // if( Line.Length < 1 )
-        // break;
+        continue;
 
       MForm.ShowStatus( Line );
       }
