@@ -1,4 +1,4 @@
-// Copyright Eric Chauvin 2017 - 2018.
+// Copyright Eric Chauvin 2018.
 // My blog is at:
 // ericsourcecode.blogspot.com
 
@@ -85,7 +85,7 @@ namespace CodeEditor
     // Use the full path so you don't have to set
     // the Environment variable.
     // So it can find the MSBuild.exe:
-    // Set Envirnment Path to 
+    // Set Envirnment Path to
     // c:\Windows\Microsoft.NET\Framework\v4.0.30319
     // MSBuild.exe MyProj.csproj
 
@@ -136,7 +136,7 @@ namespace CodeEditor
     // associated. To view the current values for
     // the associated process, call the Refresh method."
 
-    // Console.WriteLine("Physical Memory Usage: " 
+    // Console.WriteLine("Physical Memory Usage: "
        //   + myProcess.WorkingSet.ToString());
 
     // MForm.ShowStatus( "Before HasExited()." );
@@ -215,3 +215,4 @@ namespace CodeEditor
 
   }
 }
+
