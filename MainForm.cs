@@ -1,10 +1,10 @@
-// Copyright Eric Chauvin 2017 - 2018.
+// Copyright Eric Chauvin 2018.
 // My blog is at:
 // ericsourcecode.blogspot.com
 
 
-// Csc.exe is in the same directory as the
-// MSBuild.exe file.
+
+// ftp://ftp.gnu.org/
 
 
 // Microsoft Visual Studio has gotten too _helpful_,
@@ -27,14 +27,21 @@ using System.IO;
 using ECCommon;
 
 
+
+// "The Meltdown and Spectre exploitation techniques
+// abuse speculative execution to access privileged
+// memory—including that of the kernel—from a
+// less-privileged user process such as a malicious
+// app running on a device."
+
 namespace CodeEditor
 {
   public partial class MainForm : Form
   {
-  internal const string VersionDate = "12/29/2017";
+  internal const string VersionDate = "1/16/2018";
   internal const int VersionNumber = 09; // 0.9
-  private System.Threading.Mutex SingleInstanceMutex = null;
-  private bool IsSingleInstance = false;
+  // private System.Threading.Mutex SingleInstanceMutex = null;
+  // private bool IsSingleInstance = false;
   private bool IsClosing = false;
   private bool Cancelled = false;
   private EditorTabPage[] TabPagesArray;
@@ -43,19 +50,23 @@ namespace CodeEditor
   private string DataDirectory = "";
   private TextBox StatusTextBox;
   private MSBuilder Builder;
+  private CSharpCompiler CSCompiler;
   private ConfigureFile ConfigFile;
   private string CurrentProjectText = "";
   private string SearchText = "";
+  private Process ProgProcess;
+  private float MainTextFontSize = 34.0F;
+
 
 
   public MainForm()
     {
     InitializeComponent();
 
-    if( !CheckSingleInstance())
-      return;
+    // if( !CheckSingleInstance())
+      // return;
 
-    IsSingleInstance = true;
+    // IsSingleInstance = true;
 
     ///////////
     // Keep this at the top.
@@ -63,19 +74,16 @@ namespace CodeEditor
     ConfigFile = new ConfigureFile( DataDirectory + "Config.txt" ); // , this );
     ///////////
 
-
     // ConfigFile.SetString( "CurrentProject", "C:\\Eric\\ClimateModel\\ClimateModel.csproj" );
     // ConfigFile.SetString( "ProjectDirectory", "C:\\Eric\\ClimateModel\\" );
-
 
     string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
     ShowS = ShowS.Replace( ".csproj", "" );
     CurrentProjectText = ShowS;
 
     // this.Font = new System.Drawing.Font("Microsoft Sans Serif", 40F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
-    this.Font = new System.Drawing.Font( "Consolas", 34.0F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
-
-    this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+    this.Font = new System.Drawing.Font( "Consolas", 28.0F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+    this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 26F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
 
     TabPagesArray = new EditorTabPage[2];
     MainTabControl.TabPages.Clear();
@@ -84,7 +92,11 @@ namespace CodeEditor
     AddStatusPage();
     OpenRecentFiles();
 
+    ShowStatus( "Version date: " + VersionDate );
+    // MessageBox.Show( "Test this.", MessageBoxTitle, MessageBoxButtons.OK);
+
     Builder = new MSBuilder( this );
+    CSCompiler = new CSharpCompiler( this );
     KeyboardTimer.Interval = 100;
     KeyboardTimer.Start();
     }
@@ -121,14 +133,14 @@ namespace CodeEditor
     {
     return IsClosing;
     }
- 
- 
+
+
 
   internal void SetCancelled()
     {
     Cancelled = true;
     }
-    
+
 
 
   internal bool GetCancelled()
@@ -156,7 +168,7 @@ namespace CodeEditor
   // This has to be added in the Program.cs file.
   //   Application.ThreadException += new ThreadExceptionEventHandler( MainForm.UIThreadException );
   //   Application.SetUnhandledExceptionMode( UnhandledExceptionMode.CatchException );
-    // What about this part? 
+    // What about this part?
     // AppDomain.CurrentDomain.UnhandledException +=
        //  new UnhandledExceptionEventHandler( CurrentDomain_UnhandledException );
   internal static void UIThreadException( object sender, ThreadExceptionEventArgs t )
@@ -180,7 +192,7 @@ namespace CodeEditor
 
 
 
-
+  /*
   private bool CheckSingleInstance()
     {
     bool InitialOwner = false; // Owner for single instance check.
@@ -216,7 +228,7 @@ namespace CodeEditor
 
     return true;
     }
-
+    */
 
 
 
@@ -260,6 +272,7 @@ namespace CodeEditor
 
   private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
     {
+    /*
     if( IsSingleInstance )
       {
       if( DialogResult.Yes != MessageBox.Show( "Close the program?", MessageBoxTitle, MessageBoxButtons.YesNo, MessageBoxIcon.Question ))
@@ -268,16 +281,17 @@ namespace CodeEditor
         return;
         }
       }
+      */
 
     IsClosing = true;
     KeyboardTimer.Stop();
     BuildTimer.Stop();
 
-    if( IsSingleInstance )
-      {
+    // if( IsSingleInstance )
+      // {
       // SaveAllFiles();
       DisposeOfEverything();
-      }
+      // }
 
 
     /*
@@ -295,7 +309,7 @@ namespace CodeEditor
       */
 
     // ShowStatus() won't show it when it's closing.
-    // MainTextBox.AppendText( "Saving files.\r\n" ); 
+    // MainTextBox.AppendText( "Saving files.\r\n" );
     SaveStatusToFile();
     }
 
@@ -358,7 +372,7 @@ namespace CodeEditor
     int Start = SelectedTextBox.SelectionStart;
     // int Start2 = SelectedTextBox.GetFirstCharIndexOfCurrentLine();
 
-    // The +1 is for display and matching with 
+    // The +1 is for display and matching with
     // the compiler error line number.
     int Line = 1 + SelectedTextBox.GetLineFromCharIndex( Start );
     CursorLabel.Text = "Line: " + Line.ToString("N0") + "     " + TabTitle + "      Proj: " + CurrentProjectText;
@@ -379,10 +393,19 @@ namespace CodeEditor
     {
     if (IsClosing)
       return;
-    
-    StatusTextBox.AppendText( Status + "\r\n" ); 
+
+    StatusTextBox.AppendText( Status + "\r\n" );
     }
 
+
+
+  internal void ClearStatus()
+    {
+    if (IsClosing)
+      return;
+
+    StatusTextBox.Text = "";
+    }
 
 
 
@@ -390,8 +413,17 @@ namespace CodeEditor
     {
     try
     {
+    if( ProgProcess != null )
+      {
+      ProgProcess.Dispose();
+      ProgProcess = null;
+      }
+
     if( Builder != null )
       Builder.DisposeOfEverything();
+
+    if( CSCompiler != null )
+      CSCompiler.DisposeOfEverything();
 
     // Dispose of TextBoxes, etc?
     // Does the TabControl own these components?
@@ -437,7 +469,7 @@ namespace CodeEditor
     StatusTextBox.AcceptsReturn = true;
     StatusTextBox.BackColor = System.Drawing.Color.Black;
     StatusTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-    // StatusTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+    StatusTextBox.Font = new System.Drawing.Font( "Consolas", MainTextFontSize, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
     StatusTextBox.ForeColor = System.Drawing.Color.White;
     StatusTextBox.Location = new System.Drawing.Point(3, 3);
     StatusTextBox.Multiline = true;
@@ -456,7 +488,7 @@ namespace CodeEditor
     TabPageS.Text = "Status";
     TabPageS.UseVisualStyleBackColor = true;
     TabPageS.Enter += new System.EventHandler( this.tabPage_Enter );
- 
+
     MainTabControl.TabPages.Add( TabPageS );
     EditorTabPage NewPage = new EditorTabPage( this, "Status", DataDirectory + "Status.txt", StatusTextBox );
     TabPagesArray[TabPagesArrayLast] = NewPage;
@@ -497,7 +529,7 @@ namespace CodeEditor
     TextBox1.AcceptsReturn = true;
     TextBox1.BackColor = System.Drawing.Color.Black;
     TextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-    // TextBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+    TextBox1.Font = new System.Drawing.Font( "Consolas", MainTextFontSize, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
     TextBox1.ForeColor = System.Drawing.Color.White;
     TextBox1.Location = new System.Drawing.Point(3, 3);
     TextBox1.Multiline = true;
@@ -517,7 +549,7 @@ namespace CodeEditor
     TabPage1.Text = TabTitle;
     TabPage1.UseVisualStyleBackColor = true;
     TabPage1.Enter += new System.EventHandler( this.tabPage_Enter );
- 
+
     MainTabControl.TabPages.Add( TabPage1 );
 
     EditorTabPage NewPage = new EditorTabPage( this, TabTitle, FileName, TextBox1 );
@@ -535,6 +567,10 @@ namespace CodeEditor
     // TabPages.Insert( Where, tabPage1 );
 
     MainTabControl.SelectedIndex = MainTabControl.TabPages.Count - 1;
+    TextBox1.Select();
+    TextBox1.SelectionLength = 0;
+    TextBox1.SelectionStart = 0;
+
     }
     catch( Exception Except )
       {
@@ -547,6 +583,8 @@ namespace CodeEditor
 
   private void buildToolStripMenuItem1_Click(object sender, EventArgs e)
     {
+    ClearStatus();
+
     Cancelled = false;
     // Show the StatusTabPage:
     MainTabControl.SelectedIndex = 0;
@@ -560,6 +598,7 @@ namespace CodeEditor
     BuildTimer.Interval = 500;
     BuildTimer.Start();
     }
+
 
 
 
@@ -604,6 +643,7 @@ namespace CodeEditor
       ShowStatus( "Cancelled." );
       if( Builder != null )
         {
+        CSCompiler.ShowCompileLines();
         Builder.ShowMSBuildLines();
         Builder.DisposeOfEverything();
         }
@@ -741,6 +781,8 @@ namespace CodeEditor
 
   private void CloseCurrentFile()
     {
+    try
+    {
     // Don't save anything automatically.
     // SaveAllFiles();
 
@@ -754,37 +796,32 @@ namespace CodeEditor
     if( SelectedIndex >= TabPagesArrayLast )
       return;
 
-    for( int Count = SelectedIndex; (Count + 1) < TabPagesArrayLast; Count++ )
-      {
-      TabPagesArray[Count] = TabPagesArray[Count + 1];
-      }
+    // Clear all RecentFile entries.
+    for( int Count = 1; Count <= 20; Count++ )
+      ConfigFile.SetString( "RecentFile" + Count.ToString(), "", false );
 
-    TabPagesArray[TabPagesArrayLast - 1] = null;
-    TabPagesArrayLast--;
-
-    // TabPagesArray[SelectedIndex].DisposeOfEverything();
-
-    MainTabControl.TabPages.RemoveAt( SelectedIndex );
-    // Now the TabControl has a new SelectedIndex.
-    // Or None.
-    if( MainTabControl.SelectedIndex < 0 )
-      MainTabControl.SelectedIndex = 0;
-
-    if( MainTabControl.SelectedIndex >= TabPagesArrayLast )
-      MainTabControl.SelectedIndex = TabPagesArrayLast - 1;
-
+    int Where = 1;
     for( int Count = 1; Count < TabPagesArrayLast; Count++ )
       {
+      if( Count == SelectedIndex )
+        continue;
+
       string FileName = TabPagesArray[Count].FileName;
-      ConfigFile.SetString( "RecentFile" + Count.ToString(), FileName, false );
+      ConfigFile.SetString( "RecentFile" + Where.ToString(), FileName, false );
+      Where++;
       }
 
-    // Clear that one on the end.
-    ConfigFile.SetString( "RecentFile" + TabPagesArrayLast.ToString(), "", false );
     ConfigFile.WriteToTextFile();
 
-    TextBox NewSelectedBox = TabPagesArray[MainTabControl.SelectedIndex].MainTextBox;
-    NewSelectedBox.Select();
+    MainTabControl.TabPages.Clear();
+    TabPagesArrayLast = 0;
+    AddStatusPage();
+    OpenRecentFiles();
+    }
+    catch( Exception Except )
+      {
+      MessageBox.Show( "Exception in MainForm.CloseCurrentFile(): " + Except.Message, MessageBoxTitle, MessageBoxButtons.OK );
+      }
     }
 
 
@@ -846,7 +883,7 @@ namespace CodeEditor
       return;
 
     SelectedBox.Copy();
-  
+
     // .Paste();
     // If SelectionLength is not zero this will paste
     // over (replace) the current selection.
@@ -957,7 +994,9 @@ namespace CodeEditor
         if( Where >= 0 )
           {
           // MessageBox.Show( "Found at: " + Where.ToString(), MessageBoxTitle, MessageBoxButtons.OK );
+          SelectedBox.Select();
           SelectedBox.SelectionStart = Where;
+          SelectedBox.ScrollToCaret();
           return;
           }
         }
@@ -1038,7 +1077,9 @@ namespace CodeEditor
         if( Where >= 0 )
           {
           // MessageBox.Show( "Found at: " + Where.ToString(), MessageBoxTitle, MessageBoxButtons.OK );
+          SelectedBox.Select();
           SelectedBox.SelectionStart = Where;
+          SelectedBox.ScrollToCaret();
           return;
           }
         }
@@ -1074,10 +1115,95 @@ namespace CodeEditor
 
 
 
+  private void CompileTimer_Tick(object sender, EventArgs e)
+    {
+    try
+    {
+    // ShowStatus( "Build Timer." );
+    if( CSCompiler == null )
+      return;
+
+    if( Cancelled )
+      {
+      CompileTimer.Stop();
+      CSCompiler.DisposeOfEverything();
+      return;
+      }
+
+    if( CSCompiler.IsCompileFinished())
+      {
+      CompileTimer.Stop();
+      ShowStatus( "Compile finished." );
+      return;
+      }
+
+    }
+    catch( Exception Except )
+      {
+      ShowStatus( "Exception in MainForm.CompileTimer_Tick(). " + Except.Message );
+      return;
+      }
+    }
+
+
+
+  private void compileCurrentFileToolStripMenuItem_Click_1(object sender, EventArgs e)
+    {
+    ClearStatus();
+    Cancelled = false;
+
+    int SelectedIndex = MainTabControl.SelectedIndex;
+    if( SelectedIndex >= TabPagesArray.Length )
+      return;
+
+    if( SelectedIndex < 1 )
+      return;
+
+    string FileName = TabPagesArray[SelectedIndex].FileName;
+
+    // Show the StatusTabPage:
+    MainTabControl.SelectedIndex = 0;
+
+    // SaveAllFiles();
+
+    // string FileName = ConfigFile.GetString( "CurrentProject" );
+    string ProjectDirectory = ConfigFile.GetString( "ProjectDirectory" );
+    CSCompiler.StartCSharp( FileName, ProjectDirectory );
+
+    CompileTimer.Interval = 500;
+    CompileTimer.Start();
+    }
+
+
+
+  private void removeEmptyLinesToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    int SelectedIndex = MainTabControl.SelectedIndex;
+    if( SelectedIndex >= TabPagesArray.Length )
+      {
+      MessageBox.Show( "No text box selected.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    if( SelectedIndex < 0 )
+      {
+      MessageBox.Show( "No text box selected.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    if( DialogResult.Yes != MessageBox.Show( "Remove blank lines?", MessageBoxTitle, MessageBoxButtons.YesNo, MessageBoxIcon.Question ))
+      return;
+
+    TabPagesArray[SelectedIndex].RemoveEmptyLines();
+    }
+
+
+
+
 
     /*
       internal void SearchWebPagesDirectory()
-        
+
       try
         {
         WebFilesDictionary.Clear();
@@ -1110,6 +1236,52 @@ namespace CodeEditor
         */
 
 
+
+
+  internal bool StartProgramOrFile( string FileName )
+    {
+    if( !File.Exists( FileName ))
+      return false;
+    
+    if( ProgProcess != null )
+      ProgProcess.Dispose();
+
+    ProgProcess = new Process();
+    try
+    {
+    ProgProcess.StartInfo.FileName = FileName;
+    ProgProcess.StartInfo.Verb = ""; // "Print";
+    ProgProcess.StartInfo.CreateNoWindow = false;
+    ProgProcess.StartInfo.ErrorDialog = false;
+    ProgProcess.Start();
+    return true;
+    }
+    catch( Exception Except )
+      {
+      MessageBox.Show( "Could not start the file: \r\n" + FileName + "\r\n\r\nThe error was:\r\n" + Except.Message, MessageBoxTitle, MessageBoxButtons.OK, MessageBoxIcon.Stop );
+      return false;
+      }
+    }
+
+
+
+  private void runWithoutDebuggingToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    string WorkingDir = ConfigFile.GetString( "ProjectDirectory" );
+    string FileName = ConfigFile.GetString( "CurrentProject" );
+    FileName = Path.GetFileName( FileName );
+    // Path.GetDirectoryName();
+    FileName = WorkingDir + "\\bin\\Release\\" + FileName;
+    FileName = FileName.Replace( ".csproj", ".exe" );
+    // MessageBox.Show( "FileName: " + FileName, MessageBoxTitle, MessageBoxButtons.OK );
+    
+    StartProgramOrFile( FileName );
+    }
+
+
+
   }
 }
+
+
 
