@@ -3,14 +3,11 @@
 // ericsourcecode.blogspot.com
 
 
-
-// ftp://ftp.gnu.org/
-
-
 // Microsoft Visual Studio has gotten too _helpful_,
-// with the Clippy character lightbulb and all the other
-// stuff flashing on the screen.  So I wanted to have
-// a basic code editor without all of the distractions.
+// with the Clippy character lightbulb and all the
+// other stuff flashing on the screen.  So I wanted
+// to have a basic code editor without all of the
+// distractions.
 
 
 using System;
@@ -24,21 +21,14 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Diagnostics; // For starting a program/process.
 using System.IO;
-using ECCommon;
 
 
-
-// "The Meltdown and Spectre exploitation techniques
-// abuse speculative execution to access privileged
-// memory—including that of the kernel—from a
-// less-privileged user process such as a malicious
-// app running on a device."
 
 namespace CodeEditor
 {
   public partial class MainForm : Form
   {
-  internal const string VersionDate = "1/16/2018";
+  internal const string VersionDate = "1/31/2018";
   internal const int VersionNumber = 09; // 0.9
   // private System.Threading.Mutex SingleInstanceMutex = null;
   // private bool IsSingleInstance = false;
@@ -125,7 +115,6 @@ namespace CodeEditor
       return;
       }
     }
-
 
 
 
@@ -591,7 +580,8 @@ namespace CodeEditor
 
     // SaveAllFiles();
 
-    string ProjectFileName = ConfigFile.GetString( "CurrentProject" );
+    string ProjectFileName = "C:\\Eric\\ClimateModel\\BuildProj.bat";
+    // string ProjectFileName = ConfigFile.GetString( "CurrentProject" );
     string ProjectDirectory = ConfigFile.GetString( "ProjectDirectory" );
     Builder.StartMSBuild( ProjectFileName, ProjectDirectory );
 
@@ -602,9 +592,9 @@ namespace CodeEditor
 
 
 
-
   private void BuildTimer_Tick(object sender, EventArgs e)
     {
+    /*
     try
     {
     // ShowStatus( "Build Timer." );
@@ -624,6 +614,7 @@ namespace CodeEditor
       ShowStatus( "Build finished." );
       return;
       }
+    //////////
 
     // ShowStatus( "Build is not finished." );
     }
@@ -632,6 +623,7 @@ namespace CodeEditor
       ShowStatus( "Exception in MainForm.BuildTimer_Tick(). " + Except.Message );
       return;
       }
+    */
     }
 
 
@@ -644,7 +636,7 @@ namespace CodeEditor
       if( Builder != null )
         {
         CSCompiler.ShowCompileLines();
-        Builder.ShowMSBuildLines();
+        // Builder.ShowMSBuildLines();
         Builder.DisposeOfEverything();
         }
 
@@ -833,7 +825,6 @@ namespace CodeEditor
 
 
 
-
   private void closeAllToolStripMenuItem_Click(object sender, EventArgs e)
     {
     CloseAllFiles();
@@ -919,7 +910,6 @@ namespace CodeEditor
 
 
 
-
   private void setCurrentProjectToolStripMenuItem_Click(object sender, EventArgs e)
     {
     OpenFileDialog1.Title = "Code Editor";
@@ -936,10 +926,9 @@ namespace CodeEditor
     // MessageBox.Show( "Project Directory: " + ConfigFile.GetString( "ProjectDirectory" ), MessageBoxTitle, MessageBoxButtons.OK );
 
     string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
-    ShowS = ShowS.Replace( ".csproj", "" );
+    ShowS = ShowS.Replace( ".bat", "" );
     CurrentProjectText = ShowS;
     }
-
 
 
 
@@ -1029,7 +1018,6 @@ namespace CodeEditor
 
 
 
-
   private void findNextToolStripMenuItem_Click(object sender, EventArgs e)
     {
     int SelectedIndex = MainTabControl.SelectedIndex;
@@ -1090,7 +1078,6 @@ namespace CodeEditor
 
 
 
-
   private void tabPage_Enter(object sender, EventArgs e)
     {
     int SelectedIndex = MainTabControl.SelectedIndex;
@@ -1111,7 +1098,6 @@ namespace CodeEditor
     {
     CloseCurrentFile();
     }
-
 
 
 
@@ -1200,7 +1186,6 @@ namespace CodeEditor
 
 
 
-
     /*
       internal void SearchWebPagesDirectory()
 
@@ -1276,6 +1261,18 @@ namespace CodeEditor
     // MessageBox.Show( "FileName: " + FileName, MessageBoxTitle, MessageBoxButtons.OK );
     
     StartProgramOrFile( FileName );
+    }
+
+
+
+  private void showLogToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    ClearStatus();
+
+    string FileName = ConfigFile.GetString( "ProjectDirectory" );
+    FileName += "\\msbuild.log";
+    BuildLog Log = new BuildLog( FileName, this );
+    Log.ReadFromTextFile();
     }
 
 
