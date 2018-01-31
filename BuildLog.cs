@@ -45,6 +45,8 @@ namespace CodeEditor
       return false;
       }
 
+    bool DoneFound = false;
+
     try
     {
     using( StreamReader SReader = new StreamReader( FileName, Encoding.UTF8 ))
@@ -55,7 +57,11 @@ namespace CodeEditor
         if( Line == null )
           continue;
 
-        MForm.ShowStatus( Line );
+        if( Line.Contains( "Done Building Project" ))
+          DoneFound = true;
+
+        if( DoneFound )
+          MForm.ShowStatus( Line );
 
         /*
         Line = Line.Trim();
