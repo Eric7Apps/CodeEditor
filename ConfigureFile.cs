@@ -1,6 +1,7 @@
-// Programming by Eric Chauvin.
-// Notes on this source code are at:
+// Copyright Eric Chauvin 2018.
+// My blog is at:
 // ericsourcecode.blogspot.com
+
 
 
 using System;
