@@ -41,7 +41,7 @@ namespace CodeEditor
   private TextBox StatusTextBox;
   private MSBuilder Builder;
   private ConfigureFile ConfigFile;
-  private string CurrentProjectText = "";
+  private string ShowProjectText = "";
   private string SearchText = "";
   private Process ProgProcess;
   private float MainTextFontSize = 34.0F;
@@ -67,11 +67,7 @@ namespace CodeEditor
     ConfigFile = new ConfigureFile( DataDirectory + "Config.txt" ); // , this );
     ///////////
 
-    // string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
-    string ShowS = ConfigFile.GetString( "CurrentProject" );
-    ShowS = ShowS.Replace( "\\BuildProj.bat", "" );
-    ShowS = ShowS.Replace( "C:\\Eric\\", "" );
-    CurrentProjectText = ShowS;
+    SetShowProjectText();
 
     // this.Font = new System.Drawing.Font("Microsoft Sans Serif", 40F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
     this.Font = new System.Drawing.Font( "Consolas", 28.0F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
@@ -349,7 +345,7 @@ namespace CodeEditor
     // The +1 is for display and matching with
     // the compiler error line number.
     int Line = 1 + SelectedTextBox.GetLineFromCharIndex( Start );
-    CursorLabel.Text = "Line: " + Line.ToString("N0") + "     " + TabTitle + "      Proj: " + CurrentProjectText;
+    CursorLabel.Text = "Line: " + Line.ToString("N0") + "     " + TabTitle + "      Proj: " + ShowProjectText;
 
     // KeyboardTimer.Start();
     }
@@ -607,37 +603,37 @@ namespace CodeEditor
     {
     /*
     Symbols:
-        General Punctuation (2000–206F)
-        Superscripts and Subscripts (2070–209F)
-        Currency Symbols (20A0–20CF)
-        Combining Diacritical Marks for Symbols (20D0–20FF)
-        Letterlike Symbols (2100–214F)
-        Number Forms (2150–218F)
-        Arrows (2190–21FF)
-        Mathematical Operators (2200–22FF)
-        Miscellaneous Technical (2300–23FF)
-        Control Pictures (2400–243F)
-        Optical Character Recognition (2440–245F)
-        Enclosed Alphanumerics (2460–24FF)
-        Box Drawing (2500–257F)
-        Block Elements (2580–259F)
-        Geometric Shapes (25A0–25FF)
-        Miscellaneous Symbols (2600–26FF)
-        Dingbats (2700–27BF)
-        Miscellaneous Mathematical Symbols-A (27C0–27EF)
-        Supplemental Arrows-A (27F0–27FF)
-        Braille Patterns (2800–28FF)
-        Supplemental Arrows-B (2900–297F)
-        Miscellaneous Mathematical Symbols-B (2980–29FF)
-        Supplemental Mathematical Operators (2A00–2AFF)
-        Miscellaneous Symbols and Arrows (2B00–2BFF)
+        General Punctuation (2000206F)
+        Superscripts and Subscripts (2070209F)
+        Currency Symbols (20A020CF)
+        Combining Diacritical Marks for Symbols (20D020FF)
+        Letterlike Symbols (2100214F)
+        Number Forms (2150218F)
+        Arrows (219021FF)
+        Mathematical Operators (220022FF)
+        Miscellaneous Technical (230023FF)
+        Control Pictures (2400243F)
+        Optical Character Recognition (2440245F)
+        Enclosed Alphanumerics (246024FF)
+        Box Drawing (2500257F)
+        Block Elements (2580259F)
+        Geometric Shapes (25A025FF)
+        Miscellaneous Symbols (260026FF)
+        Dingbats (270027BF)
+        Miscellaneous Mathematical Symbols-A (27C027EF)
+        Supplemental Arrows-A (27F027FF)
+        Braille Patterns (280028FF)
+        Supplemental Arrows-B (2900297F)
+        Miscellaneous Mathematical Symbols-B (298029FF)
+        Supplemental Mathematical Operators (2A002AFF)
+        Miscellaneous Symbols and Arrows (2B002BFF)
 
     // See the MarkersDelimiters.cs file.
     // Don't exclude any characters in the Basic
     // Multilingual Plane except these Dingbat characters
     // which are used as markers or delimiters.
 
-    //    Dingbats (2700–27BF)
+    //    Dingbats (270027BF)
 
     // for( int Count = 0x2700; Count < 0x27BF; Count++ )
       // ShowStatus( Count.ToString( "X2" ) + ") " + Char.ToString( (char)Count ));
@@ -865,9 +861,18 @@ namespace CodeEditor
 
     // MessageBox.Show( "Project Directory: " + ConfigFile.GetString( "ProjectDirectory" ), MessageBoxTitle, MessageBoxButtons.OK );
 
-    string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
-    ShowS = ShowS.Replace( ".bat", "" );
-    CurrentProjectText = ShowS;
+    SetShowProjectText();
+    }
+
+
+
+  private void SetShowProjectText()
+    {
+    // string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
+    string ShowS = ConfigFile.GetString( "CurrentProject" );
+    ShowS = ShowS.Replace( "\\BuildProj.bat", "" );
+    ShowS = ShowS.Replace( "C:\\Eric\\", "" );
+    ShowProjectText = ShowS;
     }
 
 
@@ -1106,7 +1111,7 @@ namespace CodeEditor
     {
     if( !File.Exists( FileName ))
       return false;
-    
+
     if( ProgProcess != null )
       ProgProcess.Dispose();
 
@@ -1131,14 +1136,12 @@ namespace CodeEditor
 
   private void runWithoutDebuggingToolStripMenuItem_Click(object sender, EventArgs e)
     {
-    string WorkingDir = ConfigFile.GetString( "ProjectDirectory" );
-    string FileName = ConfigFile.GetString( "CurrentProject" );
-    FileName = Path.GetFileName( FileName );
+    // FileName = Path.GetFileName( FileName );
     // Path.GetDirectoryName();
-    FileName = WorkingDir + "\\bin\\Release\\" + FileName;
-    FileName = FileName.Replace( ".csproj", ".exe" );
+
+    string FileName = ConfigFile.GetString( "ExecutableFile" );
     // MessageBox.Show( "FileName: " + FileName, MessageBoxTitle, MessageBoxButtons.OK );
-    
+
     StartProgramOrFile( FileName );
     }
 
@@ -1156,8 +1159,24 @@ namespace CodeEditor
 
 
 
+  private void setExecutableToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+          OpenFileDialog1.Title = "Code Editor";
+    OpenFileDialog1.InitialDirectory = "C:\\Eric\\"; // DataDirectory;
+
+    if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
+      return;
+
+    string ExecFile = OpenFileDialog1.FileName;
+    ConfigFile.SetString( "ExecutableFile", ExecFile, true );
+    MessageBox.Show( "Exec File: " + ConfigFile.GetString( "ExecutableFile" ), MessageBoxTitle, MessageBoxButtons.OK );
+    }
+
+
+
   }
 }
+
 
 
 
