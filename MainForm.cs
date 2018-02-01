@@ -28,7 +28,7 @@ namespace CodeEditor
 {
   public partial class MainForm : Form
   {
-  internal const string VersionDate = "1/31/2018";
+  internal const string VersionDate = "2/1/2018";
   internal const int VersionNumber = 09; // 0.9
   // private System.Threading.Mutex SingleInstanceMutex = null;
   // private bool IsSingleInstance = false;
@@ -40,7 +40,6 @@ namespace CodeEditor
   private string DataDirectory = "";
   private TextBox StatusTextBox;
   private MSBuilder Builder;
-  private CSharpCompiler CSCompiler;
   private ConfigureFile ConfigFile;
   private string CurrentProjectText = "";
   private string SearchText = "";
@@ -53,6 +52,10 @@ namespace CodeEditor
     {
     InitializeComponent();
 
+    // If multiple instances are running, they should
+    // be started from different directories, like
+    // a project directory, so they use different
+    // config files.
     // if( !CheckSingleInstance())
       // return;
 
@@ -63,9 +66,6 @@ namespace CodeEditor
     SetupDirectories();
     ConfigFile = new ConfigureFile( DataDirectory + "Config.txt" ); // , this );
     ///////////
-
-    // ConfigFile.SetString( "CurrentProject", "C:\\Eric\\ClimateModel\\ClimateModel.csproj" );
-    // ConfigFile.SetString( "ProjectDirectory", "C:\\Eric\\ClimateModel\\" );
 
     string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
     ShowS = ShowS.Replace( ".csproj", "" );
@@ -86,7 +86,6 @@ namespace CodeEditor
     // MessageBox.Show( "Test this.", MessageBoxTitle, MessageBoxButtons.OK);
 
     Builder = new MSBuilder( this );
-    CSCompiler = new CSharpCompiler( this );
     KeyboardTimer.Interval = 100;
     KeyboardTimer.Start();
     }
@@ -274,28 +273,12 @@ namespace CodeEditor
 
     IsClosing = true;
     KeyboardTimer.Stop();
-    BuildTimer.Stop();
 
     // if( IsSingleInstance )
       // {
       // SaveAllFiles();
       DisposeOfEverything();
       // }
-
-
-    /*
-    if( GetURLMgrForm != null )
-      {
-      if( !GetURLMgrForm.IsDisposed )
-        {
-        GetURLMgrForm.Hide();
-        GetURLMgrForm.FreeEverything();
-        GetURLMgrForm.Dispose();
-        }
-
-      GetURLMgrForm = null;
-      }
-      */
 
     // ShowStatus() won't show it when it's closing.
     // MainTextBox.AppendText( "Saving files.\r\n" );
@@ -410,9 +393,6 @@ namespace CodeEditor
 
     if( Builder != null )
       Builder.DisposeOfEverything();
-
-    if( CSCompiler != null )
-      CSCompiler.DisposeOfEverything();
 
     // Dispose of TextBoxes, etc?
     // Does the TabControl own these components?
@@ -580,50 +560,10 @@ namespace CodeEditor
 
     // SaveAllFiles();
 
-    string ProjectFileName = "C:\\Eric\\ClimateModel\\BuildProj.bat";
-    // string ProjectFileName = ConfigFile.GetString( "CurrentProject" );
+    // BuildProj.bat
+    string ProjectFileName = ConfigFile.GetString( "CurrentProject" );
     string ProjectDirectory = ConfigFile.GetString( "ProjectDirectory" );
     Builder.StartMSBuild( ProjectFileName, ProjectDirectory );
-
-    BuildTimer.Interval = 500;
-    BuildTimer.Start();
-    }
-
-
-
-
-  private void BuildTimer_Tick(object sender, EventArgs e)
-    {
-    /*
-    try
-    {
-    // ShowStatus( "Build Timer." );
-    if( Builder == null )
-      return;
-
-    if( Cancelled )
-      {
-      BuildTimer.Stop();
-      Builder.DisposeOfEverything();
-      return;
-      }
-
-    if( Builder.IsMSBuildFinished())
-      {
-      BuildTimer.Stop();
-      ShowStatus( "Build finished." );
-      return;
-      }
-    //////////
-
-    // ShowStatus( "Build is not finished." );
-    }
-    catch( Exception Except )
-      {
-      ShowStatus( "Exception in MainForm.BuildTimer_Tick(). " + Except.Message );
-      return;
-      }
-    */
     }
 
 
@@ -635,8 +575,6 @@ namespace CodeEditor
       ShowStatus( "Cancelled." );
       if( Builder != null )
         {
-        CSCompiler.ShowCompileLines();
-        // Builder.ShowMSBuildLines();
         Builder.DisposeOfEverything();
         }
 
@@ -1097,67 +1035,6 @@ namespace CodeEditor
   private void closeCurrentToolStripMenuItem_Click(object sender, EventArgs e)
     {
     CloseCurrentFile();
-    }
-
-
-
-  private void CompileTimer_Tick(object sender, EventArgs e)
-    {
-    try
-    {
-    // ShowStatus( "Build Timer." );
-    if( CSCompiler == null )
-      return;
-
-    if( Cancelled )
-      {
-      CompileTimer.Stop();
-      CSCompiler.DisposeOfEverything();
-      return;
-      }
-
-    if( CSCompiler.IsCompileFinished())
-      {
-      CompileTimer.Stop();
-      ShowStatus( "Compile finished." );
-      return;
-      }
-
-    }
-    catch( Exception Except )
-      {
-      ShowStatus( "Exception in MainForm.CompileTimer_Tick(). " + Except.Message );
-      return;
-      }
-    }
-
-
-
-  private void compileCurrentFileToolStripMenuItem_Click_1(object sender, EventArgs e)
-    {
-    ClearStatus();
-    Cancelled = false;
-
-    int SelectedIndex = MainTabControl.SelectedIndex;
-    if( SelectedIndex >= TabPagesArray.Length )
-      return;
-
-    if( SelectedIndex < 1 )
-      return;
-
-    string FileName = TabPagesArray[SelectedIndex].FileName;
-
-    // Show the StatusTabPage:
-    MainTabControl.SelectedIndex = 0;
-
-    // SaveAllFiles();
-
-    // string FileName = ConfigFile.GetString( "CurrentProject" );
-    string ProjectDirectory = ConfigFile.GetString( "ProjectDirectory" );
-    CSCompiler.StartCSharp( FileName, ProjectDirectory );
-
-    CompileTimer.Interval = 500;
-    CompileTimer.Start();
     }
 
 
