@@ -67,8 +67,10 @@ namespace CodeEditor
     ConfigFile = new ConfigureFile( DataDirectory + "Config.txt" ); // , this );
     ///////////
 
-    string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
-    ShowS = ShowS.Replace( ".csproj", "" );
+    // string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
+    string ShowS = ConfigFile.GetString( "CurrentProject" );
+    ShowS = ShowS.Replace( "\\BuildProj.bat", "" );
+    ShowS = ShowS.Replace( "C:\\Eric\\", "" );
     CurrentProjectText = ShowS;
 
     // this.Font = new System.Drawing.Font("Microsoft Sans Serif", 40F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
