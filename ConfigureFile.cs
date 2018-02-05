@@ -16,7 +16,7 @@ namespace CodeEditor
 {
   class ConfigureFile
   {
-  // private MainForm MForm;
+  private MainForm MForm;
   private Dictionary<string, string> CDictionary;
   private string FileName;
   // private AESEncryption AESEncrypt;
@@ -28,9 +28,9 @@ namespace CodeEditor
 
 
 
-  internal ConfigureFile( string FileToUseName ) // , MainForm UseForm )
+  internal ConfigureFile( string FileToUseName, MainForm UseForm )
     {
-    // MForm = UseForm;
+    MForm = UseForm;
 
     FileName = FileToUseName;
     // AESEncrypt = new AESEncryption();
@@ -63,7 +63,7 @@ namespace CodeEditor
 
     if( KeyWord == "" )
       {
-      // MForm.ShowStatus( "Can't add an empty keyword to the dictionary in ConfigureFile.cs." );
+      MForm.ShowStatus( "Can't add an empty keyword to the dictionary in ConfigureFile.cs." );
       return;
       }
 
@@ -126,10 +126,10 @@ namespace CodeEditor
 
     return true;
     }
-    catch( Exception ) // Except )
+    catch( Exception Except )
       {
-      // MForm.ShowStatus( "Could not read the file: \r\n" + FileName );
-      // MForm.ShowStatus( Except.Message );
+      MForm.ShowStatus( "Could not read the file: \r\n" + FileName );
+      MForm.ShowStatus( Except.Message );
       return false;
       }
     }
@@ -151,15 +151,15 @@ namespace CodeEditor
 
       SWriter.WriteLine( " " );
       }
-    }
-    catch( Exception ) // Except )
-      {
-      // MForm.ShowStatus( "Could not write the configuration data to the file." );
-      // MForm.ShowStatus( Except.Message );
-      return false;
-      }
 
     return true;
+    }
+    catch( Exception Except )
+      {
+      MForm.ShowStatus( "Could not write the configuration data to the file." );
+      MForm.ShowStatus( Except.Message );
+      return false;
+      }
     }
 
 
