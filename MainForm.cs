@@ -28,7 +28,7 @@ namespace CodeEditor
 {
   public partial class MainForm : Form
   {
-  internal const string VersionDate = "2/1/2018";
+  internal const string VersionDate = "2/5/2018";
   internal const int VersionNumber = 09; // 0.9
   // private System.Threading.Mutex SingleInstanceMutex = null;
   // private bool IsSingleInstance = false;
@@ -40,7 +40,8 @@ namespace CodeEditor
   private string DataDirectory = "";
   private TextBox StatusTextBox;
   private MSBuilder Builder;
-  private ConfigureFile ConfigFile;
+  private ConfigureFile MainConfigFile;
+  private ConfigureFile ProjectConfigFile;
   private string ShowProjectText = "";
   private string SearchText = "";
   private Process ProgProcess;
@@ -64,7 +65,13 @@ namespace CodeEditor
     ///////////
     // Keep this at the top.
     SetupDirectories();
-    ConfigFile = new ConfigureFile( DataDirectory + "Config.txt" ); // , this );
+    MainConfigFile = new ConfigureFile( DataDirectory + "MainConfig.txt", this );
+
+    string CurrentProjectFileName = MainConfigFile.GetString( "CurrentProjectFile" );
+    if( CurrentProjectFileName.Length < 4 )
+      CurrentProjectFileName = DataDirectory + "ProjectOptions.txt";
+
+    ProjectConfigFile = new ConfigureFile( CurrentProjectFileName, this );
     ///////////
 
     SetShowProjectText();
@@ -475,7 +482,7 @@ namespace CodeEditor
     {
     for( int Count = 1; Count <= 20; Count++ )
       {
-      string FileName = ConfigFile.GetString( "RecentFile" + Count.ToString() );
+      string FileName = ProjectConfigFile.GetString( "RecentFile" + Count.ToString() );
       if( FileName.Length < 1 )
         break;
 
@@ -522,7 +529,7 @@ namespace CodeEditor
     EditorTabPage NewPage = new EditorTabPage( this, TabTitle, FileName, TextBox1 );
     TabPagesArray[TabPagesArrayLast] = NewPage;
 
-    ConfigFile.SetString( "RecentFile" + TabPagesArrayLast.ToString(), FileName, true );
+    ProjectConfigFile.SetString( "RecentFile" + TabPagesArrayLast.ToString(), FileName, true );
 
     TabPagesArrayLast++;
 
@@ -559,9 +566,12 @@ namespace CodeEditor
     // SaveAllFiles();
 
     // BuildProj.bat
-    string ProjectFileName = ConfigFile.GetString( "CurrentProject" );
-    string ProjectDirectory = ConfigFile.GetString( "ProjectDirectory" );
-    Builder.StartMSBuild( ProjectFileName, ProjectDirectory );
+    string ProjectDirectory = ProjectConfigFile.GetString( "ProjectDirectory" );
+    if( !ProjectDirectory.EndsWith( "\\" ))
+      ProjectDirectory += "\\";
+
+    string BuildBatchFileName = ProjectDirectory + "BuildProj.bat";
+    Builder.StartMSBuild( BuildBatchFileName, ProjectDirectory );
     }
 
 
@@ -587,6 +597,7 @@ namespace CodeEditor
     {
     OpenFileDialog1.Title = "Code Editor";
     OpenFileDialog1.InitialDirectory = "C:\\Eric\\"; // DataDirectory;
+    OpenFileDialog1.Filter = "All files (*.*)|*.*";
 
     if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
       return;
@@ -672,10 +683,10 @@ namespace CodeEditor
       {
       TabPagesArray[Count].WriteToTextFile();
       string FileName = TabPagesArray[Count].FileName;
-      ConfigFile.SetString( "RecentFile" + Count.ToString(), FileName, false );
+      ProjectConfigFile.SetString( "RecentFile" + Count.ToString(), FileName, false );
       }
 
-    ConfigFile.WriteToTextFile();
+    ProjectConfigFile.WriteToTextFile();
     }
 
 
@@ -688,10 +699,10 @@ namespace CodeEditor
     // Dispose of text boxes, etc?
     for( int Count = 1; Count <= 20; Count++ )
       {
-      ConfigFile.SetString( "RecentFile" + Count.ToString(), "", false );
+      ProjectConfigFile.SetString( "RecentFile" + Count.ToString(), "", false );
       }
 
-    ConfigFile.WriteToTextFile();
+    ProjectConfigFile.WriteToTextFile();
 
     for (int Count = 0; Count < TabPagesArrayLast; Count++)
       {
@@ -726,7 +737,7 @@ namespace CodeEditor
 
     // Clear all RecentFile entries.
     for( int Count = 1; Count <= 20; Count++ )
-      ConfigFile.SetString( "RecentFile" + Count.ToString(), "", false );
+      ProjectConfigFile.SetString( "RecentFile" + Count.ToString(), "", false );
 
     int Where = 1;
     for( int Count = 1; Count < TabPagesArrayLast; Count++ )
@@ -735,11 +746,11 @@ namespace CodeEditor
         continue;
 
       string FileName = TabPagesArray[Count].FileName;
-      ConfigFile.SetString( "RecentFile" + Where.ToString(), FileName, false );
+      ProjectConfigFile.SetString( "RecentFile" + Where.ToString(), FileName, false );
       Where++;
       }
 
-    ConfigFile.WriteToTextFile();
+    ProjectConfigFile.WriteToTextFile();
 
     MainTabControl.TabPages.Clear();
     TabPagesArrayLast = 0;
@@ -786,6 +797,7 @@ namespace CodeEditor
 
     SaveFileDialog1.Title = TabPagesArray[SelectedIndex].TabTitle;
     SaveFileDialog1.InitialDirectory = DataDirectory;
+    SaveFileDialog1.Filter = "All files (*.*)|*.*";
 
     if( SaveFileDialog1.ShowDialog() != DialogResult.OK )
       return;
@@ -795,7 +807,7 @@ namespace CodeEditor
     TabPagesArray[SelectedIndex].WriteToTextFile();
     MainTabControl.TabPages[SelectedIndex].Text = TabPagesArray[SelectedIndex].TabTitle;
 
-    ConfigFile.SetString( "RecentFile" + SelectedIndex.ToString(), TabPagesArray[SelectedIndex].FileName, true );
+    ProjectConfigFile.SetString( "RecentFile" + SelectedIndex.ToString(), TabPagesArray[SelectedIndex].FileName, true );
     }
 
 
@@ -850,16 +862,37 @@ namespace CodeEditor
     {
     OpenFileDialog1.Title = "Code Editor";
     OpenFileDialog1.InitialDirectory = "C:\\Eric\\"; // DataDirectory;
+    // openFileDialog1.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*" ;
+    // openFileDialog1.FilterIndex = 2 ;
+    OpenFileDialog1.Filter = "txt files (*.txt)|*.txt";
+
+    OpenFileDialog1.CheckFileExists = false;
+    OpenFileDialog1.FileName = "ProjectName.txt";
 
     if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
       return;
 
-    string ProjectFile = OpenFileDialog1.FileName;
-    string WorkingDir = Path.GetDirectoryName( ProjectFile );
-    ConfigFile.SetString( "CurrentProject", ProjectFile, true );
-    ConfigFile.SetString( "ProjectDirectory", WorkingDir, true );
+    CloseAllFiles();
+    string ProjectFileName = OpenFileDialog1.FileName;
 
-    // MessageBox.Show( "Project Directory: " + ConfigFile.GetString( "ProjectDirectory" ), MessageBoxTitle, MessageBoxButtons.OK );
+    if( ProjectFileName.Length < 4 )
+      {
+      MessageBox.Show( "Pick a file in the Project directory.", MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
+    MainConfigFile.SetString( "CurrentProjectFile", ProjectFileName, true );
+
+    // Just make a new one instead of the old one.
+    ProjectConfigFile = new ConfigureFile( ProjectFileName, this );
+
+    string WorkingDir = ProjectFileName;
+    WorkingDir = Path.GetDirectoryName( WorkingDir );
+    ProjectConfigFile.SetString( "ProjectDirectory", WorkingDir, true );
+
+    OpenRecentFiles();
+
+    // string BuildBatchFileName = ProjectConfigFile.GetString( "BuildBatchFile" );
 
     SetShowProjectText();
     }
@@ -868,9 +901,10 @@ namespace CodeEditor
 
   private void SetShowProjectText()
     {
-    // string ShowS = Path.GetFileName( ConfigFile.GetString( "CurrentProject" ));
-    string ShowS = ConfigFile.GetString( "CurrentProject" );
-    ShowS = ShowS.Replace( "\\BuildProj.bat", "" );
+    string ShowS = ProjectConfigFile.GetString( "ProjectDirectory" );
+    // GetFileName()
+    // ChangeExtension()
+
     ShowS = ShowS.Replace( "C:\\Eric\\", "" );
     ShowProjectText = ShowS;
     }
@@ -1139,7 +1173,7 @@ namespace CodeEditor
     // FileName = Path.GetFileName( FileName );
     // Path.GetDirectoryName();
 
-    string FileName = ConfigFile.GetString( "ExecutableFile" );
+    string FileName = ProjectConfigFile.GetString( "ExecutableFile" );
     // MessageBox.Show( "FileName: " + FileName, MessageBoxTitle, MessageBoxButtons.OK );
 
     StartProgramOrFile( FileName );
@@ -1151,7 +1185,7 @@ namespace CodeEditor
     {
     ClearStatus();
 
-    string FileName = ConfigFile.GetString( "ProjectDirectory" );
+    string FileName = ProjectConfigFile.GetString( "ProjectDirectory" );
     FileName += "\\msbuild.log";
     BuildLog Log = new BuildLog( FileName, this );
     Log.ReadFromTextFile();
@@ -1161,19 +1195,23 @@ namespace CodeEditor
 
   private void setExecutableToolStripMenuItem_Click(object sender, EventArgs e)
     {
-          OpenFileDialog1.Title = "Code Editor";
+    OpenFileDialog1.Title = "Code Editor";
     OpenFileDialog1.InitialDirectory = "C:\\Eric\\"; // DataDirectory;
+    OpenFileDialog1.Filter = "exe files (*.exe)|*.exe";
 
     if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
       return;
 
     string ExecFile = OpenFileDialog1.FileName;
-    ConfigFile.SetString( "ExecutableFile", ExecFile, true );
-    MessageBox.Show( "Exec File: " + ConfigFile.GetString( "ExecutableFile" ), MessageBoxTitle, MessageBoxButtons.OK );
+    ProjectConfigFile.SetString( "ExecutableFile", ExecFile, true );
+    MessageBox.Show( "Exec File: " + ProjectConfigFile.GetString( "ExecutableFile" ), MessageBoxTitle, MessageBoxButtons.OK );
     }
 
+    private void compileToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+      // Call My Code Analysis
 
-
+    }
   }
 }
 
