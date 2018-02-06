@@ -65,11 +65,10 @@ namespace CodeEditor
         if( Line == null )
           continue;
 
-        if( AsciiOnly )
-          Line = CleanAsciiString( Line, 4096 );
-
         Line = Line.Replace( "\t", "  " );
+        Line = StringsEC.GetCleanUnicodeString( Line, 4000, false );
         Line = Line.TrimEnd(); // TrimStart()
+
         // if( Line == "" )
           // continue;
 
@@ -114,34 +113,6 @@ namespace CodeEditor
       MForm.ShowStatus( "Exception in RemoveEmptyLines():" );
       MForm.ShowStatus( Except.Message );
       }
-    }
-
-
-
-  internal string CleanAsciiString( string InString, int MaxLength )
-    {
-    if( InString == null )
-      return "";
-
-    StringBuilder SBuilder = new StringBuilder();
-
-    for( int Count = 0; Count < InString.Length; Count++ )
-      {
-      if( Count >= MaxLength )
-        break;
-
-      if( InString[Count] > 127 )
-        continue; // Don't want this character.
-
-      if( InString[Count] < ' ' )
-        continue; // Space is lowest ASCII character.
-
-      SBuilder.Append( Char.ToString( InString[Count] ) );
-      }
-
-    string Result = SBuilder.ToString();
-    // Result = Result.Replace( "\"", "" );
-    return Result;
     }
 
 
