@@ -872,7 +872,11 @@ namespace CodeEditor
     if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
       return;
 
-    CloseAllFiles();
+    // CloseAllFiles();
+    MainTabControl.TabPages.Clear();
+    TabPagesArrayLast = 0;
+    AddStatusPage();
+
     string ProjectFileName = OpenFileDialog1.FileName;
 
     if( ProjectFileName.Length < 4 )
@@ -1210,8 +1214,15 @@ namespace CodeEditor
     private void compileToolStripMenuItem_Click(object sender, EventArgs e)
     {
       // Call My Code Analysis
-
+    // Nake a file that contains a list of the source
+    // code files used in the project.
+    // ProjectSource.txt
+    // Use the full path.  No searching for source
+    // files allowed.  They have to be explicitely
+    // listed in the file.
     }
+
+
   }
 }
 
