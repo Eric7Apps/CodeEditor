@@ -2,6 +2,10 @@
 // My blog is at:
 // ericsourcecode.blogspot.com
 
+// For examples and notes about project files, see
+// any of the project files in any of the projects
+// I have in the repositories on GitHub.
+
 
 using System;
 using System.Collections.Generic;
@@ -104,28 +108,12 @@ namespace CodeEditor
 
 rem echo Test this.
 
-rem Command line options:
-rem https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-command-line-reference
-
-rem Common Properties:
-rem https://docs.microsoft.com/en-us/visualstudio/msbuild/common-msbuild-project-properties
-
-rem MSBuild Reference:
-rem https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-reference
-
-rem MSBuild in Wikipedia:
-rem https://en.wikipedia.org/wiki/MSBuild
-
-rem MSBuild Task Reference:
-rem https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-task-reference
-
-rem Visual C++ Tasks:
-rem https://msdn.microsoft.com/en-us/library/ff960151.aspx
-
 rem This should already be running in the
 rem working directory this batch file is in.
 rem cd c:\Eric\ClimateModel
 
+rem The properties can be in the project file instead
+rem of on the command line.
 c:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe  /nologo /p:Configuration=Release /p:DebugSymbols=false /p:DefineDebug=false /p:DefineTrace=false /fileLogger /verbosity:normal ComputationLinks.csproj
 
 rem Help:
@@ -136,4 +124,5 @@ pause
 
   }
 }
+
 
