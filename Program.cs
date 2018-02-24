@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-// using System.Linq;
-using System.Threading.Tasks;
+// using System.Threading.Tasks;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace CodeEditor
+
+namespace CodeEditor2
 {
   static class Program
   {
@@ -24,7 +24,8 @@ namespace CodeEditor
     // AppDomain.CurrentDomain.UnhandledException +=
        //  new UnhandledExceptionEventHandler( CurrentDomain_UnhandledException );
 
-    Application.Run(new MainForm());
+      Application.Run(new MainForm());
     }
   }
 }
+
