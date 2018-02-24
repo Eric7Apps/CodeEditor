@@ -1,10 +1,13 @@
-// Programming by Eric Chauvin.
+// Copyright Eric Chauvin 2018.
+// My blog is at:
+// ericsourcecode.blogspot.com
+
 
 using System;
 using System.Text;
 
 
-namespace CodeEditor
+namespace CodeEditor2
 {
   class ECTime
   {
@@ -127,49 +130,49 @@ namespace CodeEditor
   internal int GetYear()
     {
     return UTCTime.Year;
-    } 
+    }
 
 
 
   internal int GetMonth()
     {
     return UTCTime.Month;
-    } 
+    }
 
 
 
   internal int GetDay()
     {
     return UTCTime.Day;
-    } 
+    }
 
 
 
   internal int GetHour()
     {
     return UTCTime.Hour;
-    } 
+    }
 
 
 
   internal int GetMinute()
     {
     return UTCTime.Minute;
-    } 
+    }
 
 
 
   internal int GetSecond()
     {
     return UTCTime.Second;
-    } 
+    }
 
 
 
   internal int GetMillisecond()
     {
     return UTCTime.Millisecond;
-    } 
+    }
 
 
 
@@ -238,9 +241,9 @@ namespace CodeEditor
     {
     // This won't be quite exact since it's to the nearest millisecond.
 
-    UTCTime = new DateTime( ToCopy.GetYear(), 
+    UTCTime = new DateTime( ToCopy.GetYear(),
                             ToCopy.GetMonth(),
-                            ToCopy.GetDay(), 
+                            ToCopy.GetDay(),
                             ToCopy.GetHour(),
                             ToCopy.GetMinute(),
                             ToCopy.GetSecond(),
@@ -254,9 +257,9 @@ namespace CodeEditor
 
   internal void TruncateToEvenSeconds()
     {
-    UTCTime = new DateTime( UTCTime.Year, 
+    UTCTime = new DateTime( UTCTime.Year,
                             UTCTime.Month,
-                            UTCTime.Day, 
+                            UTCTime.Day,
                             UTCTime.Hour,
                             UTCTime.Minute,
                             UTCTime.Second,
@@ -310,9 +313,9 @@ namespace CodeEditor
 
   internal void SetToYear1900()
     {
-    UTCTime = new DateTime( 1900, 
+    UTCTime = new DateTime( 1900,
                             1,
-                            1, 
+                            1,
                             0,
                             0,
                             0,
@@ -360,7 +363,7 @@ namespace CodeEditor
     {
     UTCStartScaleTime = new DateTime( 1900,
                             1,
-                            1, 
+                            1,
                             0,
                             0,
                             0,
@@ -410,9 +413,9 @@ namespace CodeEditor
 
     try
     {
-    UTCTime = new DateTime( Year, 
+    UTCTime = new DateTime( Year,
                             Month,
-                            Day, 
+                            Day,
                             Hour,
                             Minute,
                             Second,
@@ -551,7 +554,7 @@ namespace CodeEditor
 
       HourS = " " + HourS;
 
-    
+
 
     string MinS = TheTime.Minute.ToString();
 
@@ -592,9 +595,9 @@ namespace CodeEditor
 
     try
     {
-    DateTime LocalTime = new DateTime( Year, 
+    DateTime LocalTime = new DateTime( Year,
                             Month,
-                            Day, 
+                            Day,
                             Hour,
                             Minute,
                             Second,
@@ -777,3 +780,8 @@ namespace CodeEditor
 
   }
 }
+
+
+
+
+
