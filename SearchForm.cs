@@ -2,6 +2,7 @@
 // My blog is at:
 // ericsourcecode.blogspot.com
 
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,16 +14,19 @@ using System.Windows.Forms;
 
 
 
-namespace CodeEditor
+namespace CodeEditor2
 {
+  // public partial class SearchForm : Form
   public partial class SearchForm : Form
   {
   private string SearchText = "";
+  private System.Windows.Forms.TextBox SearchTextBox;
 
 
   public SearchForm()
     {
-    InitializeComponent();
+    InitializeGuiComponents();
+    // InitializeComponent();
     }
 
 
@@ -46,5 +50,47 @@ namespace CodeEditor
 
 
 
+
+  private void InitializeGuiComponents()
+    {
+      this.SearchTextBox = new System.Windows.Forms.TextBox();
+      this.SuspendLayout();
+      //
+      // SearchTextBox
+      //
+      this.SearchTextBox.Location = new System.Drawing.Point(25, 24);
+      this.SearchTextBox.Name = "SearchTextBox";
+      this.SearchTextBox.Size = new System.Drawing.Size(286, 39);
+      this.SearchTextBox.TabIndex = 0;
+      this.SearchTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.SearchTextBox_KeyDown);
+      //
+      // SearchForm
+      //
+      this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+      this.BackColor = System.Drawing.Color.Black;
+      this.ClientSize = new System.Drawing.Size(437, 138);
+      this.Controls.Add(this.SearchTextBox);
+      this.Font = new System.Drawing.Font("Microsoft Sans Serif", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+      this.ForeColor = System.Drawing.Color.White;
+      this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+      this.Name = "SearchForm";
+      this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+      this.Text = "Search";
+      this.ResumeLayout(false);
+      this.PerformLayout();
+    }
+
+
+
+  internal void FreeEverything()
+    {
+    SearchTextBox.Dispose();
+    }
+
+
+
   }
 }
+
+
+
