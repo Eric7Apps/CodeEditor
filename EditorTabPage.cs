@@ -2,6 +2,7 @@
 // Notes on this source code are at:
 // ericsourcecode.blogspot.com
 
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -16,7 +17,7 @@ using System.Threading;
 
 
 
-namespace CodeEditor
+namespace CodeEditor2
 {
   class EditorTabPage
   {
@@ -35,7 +36,7 @@ namespace CodeEditor
 
 
   internal EditorTabPage( MainForm UseForm, string SetTabTitle, string SetFileName, TextBox SetTextBox )
-    { 
+    {
     MForm = UseForm;
     FileName = SetFileName;
     TabTitle = SetTabTitle;
@@ -59,7 +60,7 @@ namespace CodeEditor
     StringBuilder SBuilder = new StringBuilder();
     using( StreamReader SReader = new StreamReader( FileName, Encoding.UTF8 ))
       {
-      while( SReader.Peek() >= 0 ) 
+      while( SReader.Peek() >= 0 )
         {
         string Line = SReader.ReadLine();
         if( Line == null )
@@ -151,3 +152,7 @@ namespace CodeEditor
 
   }
 }
+
+
+
+
