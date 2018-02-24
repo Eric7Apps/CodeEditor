@@ -3,6 +3,13 @@
 // ericsourcecode.blogspot.com
 
 
+// Set the path for Java in a batch file.
+// set PATH=%PATH%;C:\xampp\php
+
+
+// Code Editor version 2.
+
+
 // Microsoft Visual Studio has gotten too _helpful_,
 // with the Clippy character lightbulb and all the
 // other stuff flashing on the screen.  So I wanted
@@ -13,7 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-// using System.Data;
+using System.Data;
 using System.Drawing;
 using System.Text;
 // using System.Threading.Tasks;
@@ -24,14 +31,15 @@ using System.IO;
 
 
 
-namespace CodeEditor
+namespace CodeEditor2
 {
-  public partial class MainForm : Form
+  // public partial class MainForm : Form
+  public class MainForm : Form
   {
-  internal const string VersionDate = "2/5/2018";
-  internal const int VersionNumber = 09; // 0.9
-  // private System.Threading.Mutex SingleInstanceMutex = null;
-  // private bool IsSingleInstance = false;
+  internal const string VersionDate = "2/24/2018";
+  internal const int VersionNumber = 20; // 2.0
+  private System.Threading.Mutex SingleInstanceMutex = null;
+  private bool IsSingleInstance = false;
   private bool IsClosing = false;
   private bool Cancelled = false;
   private EditorTabPage[] TabPagesArray;
@@ -47,20 +55,64 @@ namespace CodeEditor
   private Process ProgProcess;
   private float MainTextFontSize = 34.0F;
 
+  // System.Windows.Forms.
+  private MenuStrip menuStrip1;
+  private ToolStripMenuItem fileToolStripMenuItem;
+  private ToolStripMenuItem saveToolStripMenuItem;
+  private ToolStripMenuItem exitToolStripMenuItem;
+  private ToolStripMenuItem helpToolStripMenuItem;
+  private ToolStripMenuItem aboutToolStripMenuItem;
+  private Panel BottomPanel;
+  private Panel MainPanel;
+  private TabControl MainTabControl;
+  // private TabPage tabPage1;
+  // private TabPage tabPage2;
+  private System.Windows.Forms.Timer KeyboardTimer;
+  private System.Windows.Forms.Timer SingleInstanceTimer;
+  // private TextBox TextBox1;
+  private ToolStripMenuItem buildToolStripMenuItem;
+  private ToolStripMenuItem buildToolStripMenuItem1;
+  private Label CursorLabel;
+  private OpenFileDialog OpenFileDialog1;
+  private ToolStripMenuItem openToolStripMenuItem;
+  private ToolStripMenuItem showNonAsciiToolStripMenuItem;
+  private ToolStripMenuItem closeAllToolStripMenuItem;
+  private SaveFileDialog SaveFileDialog1;
+  private ToolStripMenuItem saveFileAsToolStripMenuItem;
+  private ToolStripMenuItem editToolStripMenuItem;
+  private ToolStripMenuItem copyToolStripMenuItem;
+  private ToolStripMenuItem cutToolStripMenuItem;
+  private ToolStripMenuItem selectAllToolStripMenuItem;
+  private ToolStripMenuItem projectToolStripMenuItem;
+  private ToolStripMenuItem setCurrentProjectToolStripMenuItem;
+  private ToolStripMenuItem findToolStripMenuItem;
+  private ToolStripMenuItem findNextToolStripMenuItem;
+  private ToolStripMenuItem closeCurrentToolStripMenuItem;
+  private ToolStripMenuItem removeEmptyLinesToolStripMenuItem;
+  private ToolStripMenuItem debugToolStripMenuItem;
+  private ToolStripMenuItem runWithoutDebuggingToolStripMenuItem;
+  private ToolStripMenuItem showLogToolStripMenuItem;
+  private ToolStripMenuItem setExecutableToolStripMenuItem;
+  private ToolStripMenuItem codeAnalysisToolStripMenuItem;
+  private ToolStripMenuItem runToolStripMenuItem;
+  private ToolStripMenuItem newFileToolStripMenuItem;
+
+
 
 
   public MainForm()
     {
-    InitializeComponent();
+    // InitializeComponent();
+    InitializeGuiComponents();
 
-    // If multiple instances are running, they should
-    // be started from different directories, like
-    // a project directory, so they use different
-    // config files.
-    // if( !CheckSingleInstance())
-      // return;
+    // this.Font = new System.Drawing.Font("Microsoft Sans Serif", 40F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+    this.Font = new System.Drawing.Font( "Consolas", 28.0F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+    this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 26F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
 
-    // IsSingleInstance = true;
+    if( !CheckSingleInstance())
+      return;
+
+    IsSingleInstance = true;
 
     ///////////
     // Keep this at the top.
@@ -75,10 +127,6 @@ namespace CodeEditor
     ///////////
 
     SetShowProjectText();
-
-    // this.Font = new System.Drawing.Font("Microsoft Sans Serif", 40F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
-    this.Font = new System.Drawing.Font( "Consolas", 28.0F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
-    this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 26F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
 
     TabPagesArray = new EditorTabPage[2];
     MainTabControl.TabPages.Clear();
@@ -185,7 +233,6 @@ namespace CodeEditor
 
 
 
-  /*
   private bool CheckSingleInstance()
     {
     bool InitialOwner = false; // Owner for single instance check.
@@ -194,7 +241,7 @@ namespace CodeEditor
 
     try
     {
-    SingleInstanceMutex = new System.Threading.Mutex( true, "Eric's Code Editor Single Instance", out InitialOwner );
+    SingleInstanceMutex = new System.Threading.Mutex( true, "Eric's Code Editor Version 2 Single Instance", out InitialOwner );
     }
     catch
       {
@@ -221,7 +268,6 @@ namespace CodeEditor
 
     return true;
     }
-    */
 
 
 
@@ -251,7 +297,6 @@ namespace CodeEditor
 
 
 
-
   private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
     {
     string ShowS = "Programming by Eric Chauvin." +
@@ -265,7 +310,6 @@ namespace CodeEditor
 
   private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
     {
-    /*
     if( IsSingleInstance )
       {
       if( DialogResult.Yes != MessageBox.Show( "Close the program?", MessageBoxTitle, MessageBoxButtons.YesNo, MessageBoxIcon.Question ))
@@ -274,7 +318,6 @@ namespace CodeEditor
         return;
         }
       }
-      */
 
     IsClosing = true;
     KeyboardTimer.Stop();
@@ -282,7 +325,7 @@ namespace CodeEditor
     // if( IsSingleInstance )
       // {
       // SaveAllFiles();
-      DisposeOfEverything();
+      FreeEverything();
       // }
 
     // ShowStatus() won't show it when it's closing.
@@ -386,7 +429,7 @@ namespace CodeEditor
 
 
 
-  private void DisposeOfEverything()
+  private void FreeEverything()
     {
     try
     {
@@ -399,8 +442,6 @@ namespace CodeEditor
     if( Builder != null )
       Builder.DisposeOfEverything();
 
-    // Dispose of TextBoxes, etc?
-    // Does the TabControl own these components?
 
     for (int Count = 0; Count < TabPagesArrayLast; Count++)
       {
@@ -415,10 +456,51 @@ namespace CodeEditor
     MainTabControl.TabPages.Clear();
 
     TabPagesArrayLast = 0;
+
+    menuStrip1.Dispose();
+    fileToolStripMenuItem.Dispose();
+    saveToolStripMenuItem.Dispose();
+    exitToolStripMenuItem.Dispose();
+    helpToolStripMenuItem.Dispose();
+    aboutToolStripMenuItem.Dispose();
+    BottomPanel.Dispose();
+    MainPanel.Dispose();
+    MainTabControl.Dispose();
+    // tabPage1.Dispose();
+    // tabPage2.Dispose();
+    KeyboardTimer.Dispose();
+    SingleInstanceTimer.Dispose();
+    // TextBox1;
+    buildToolStripMenuItem.Dispose();
+    buildToolStripMenuItem1.Dispose();
+    CursorLabel.Dispose();
+    OpenFileDialog1.Dispose();
+    openToolStripMenuItem.Dispose();
+    showNonAsciiToolStripMenuItem.Dispose();
+    closeAllToolStripMenuItem.Dispose();
+    SaveFileDialog1.Dispose();
+    saveFileAsToolStripMenuItem.Dispose();
+    editToolStripMenuItem.Dispose();
+    copyToolStripMenuItem.Dispose();
+    cutToolStripMenuItem.Dispose();
+    selectAllToolStripMenuItem.Dispose();
+    projectToolStripMenuItem.Dispose();
+    setCurrentProjectToolStripMenuItem.Dispose();
+    findToolStripMenuItem.Dispose();
+    findNextToolStripMenuItem.Dispose();
+    closeCurrentToolStripMenuItem.Dispose();
+    removeEmptyLinesToolStripMenuItem.Dispose();
+    debugToolStripMenuItem.Dispose();
+    runWithoutDebuggingToolStripMenuItem.Dispose();
+    showLogToolStripMenuItem.Dispose();
+    setExecutableToolStripMenuItem.Dispose();
+    codeAnalysisToolStripMenuItem.Dispose();
+    runToolStripMenuItem.Dispose();
+    newFileToolStripMenuItem.Dispose();
     }
     catch( Exception Except )
       {
-      MessageBox.Show( "Exception in MainForm.DisposeOfEverything(). " + Except.Message, MessageBoxTitle, MessageBoxButtons.OK);
+      MessageBox.Show( "Exception in MainForm.FreeEverything(). " + Except.Message, MessageBoxTitle, MessageBoxButtons.OK);
       return;
       }
     }
@@ -447,8 +529,12 @@ namespace CodeEditor
     StatusTextBox.ForeColor = System.Drawing.Color.White;
     StatusTextBox.Location = new System.Drawing.Point(3, 3);
     StatusTextBox.Multiline = true;
+
+/*
     TextBox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
     TextBox1.WordWrap = false;
+*/
+
     StatusTextBox.Name = "TextBox1";
     StatusTextBox.Size = new System.Drawing.Size(781, 219);
     StatusTextBox.TabIndex = 0;
@@ -796,9 +882,9 @@ namespace CodeEditor
       }
 
     SaveFileDialog1.Title = TabPagesArray[SelectedIndex].TabTitle;
-    SaveFileDialog1.InitialDirectory = DataDirectory;
+    SaveFileDialog1.InitialDirectory = "C:\\Eric\\"; // DataDirectory;
     SaveFileDialog1.Filter = "All files (*.*)|*.*";
-
+    SaveFileDialog1.FileName = "";
     if( SaveFileDialog1.ShowDialog() != DialogResult.OK )
       return;
 
@@ -934,9 +1020,14 @@ namespace CodeEditor
     // try
     SForm.ShowDialog();
     if( SForm.DialogResult == DialogResult.Cancel )
+      {
+      SForm.FreeEverything();
       return;
+      }
 
     SearchText = SForm.GetSearchText().Trim().ToLower();
+    SForm.FreeEverything();
+
     if( SearchText.Length < 1 )
       {
       MessageBox.Show( "No search text entered.", MessageBoxTitle, MessageBoxButtons.OK );
@@ -1144,7 +1235,6 @@ namespace CodeEditor
 
 
 
-
   internal bool StartProgramOrFile( string FileName )
     {
     if( !File.Exists( FileName ))
@@ -1211,20 +1301,370 @@ namespace CodeEditor
     MessageBox.Show( "Exec File: " + ProjectConfigFile.GetString( "ExecutableFile" ), MessageBoxTitle, MessageBoxButtons.OK );
     }
 
-    private void compileToolStripMenuItem_Click(object sender, EventArgs e)
+
+
+
+  private void runToolStripMenuItem_Click(object sender, EventArgs e)
     {
-      // Call My Code Analysis
     // Nake a file that contains a list of the source
     // code files used in the project.
     // ProjectSource.txt
     // Use the full path.  No searching for source
     // files allowed.  They have to be explicitely
     // listed in the file.
+    string FileName = "c:\\Eric\\CodeAnalysis\\bin\\Release\\CodeAnalysis.exe";
+    StartProgramOrFile( FileName );
     }
+
+
+
+  private void newFileToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+    string TabTitle = "No Name"; // Path.GetFileName( OpenFileDialog1.FileName );
+    string FileName = "NoName.txt"; // OpenFileDialog1.FileName;
+    AddNewPage( TabTitle, FileName );
+    }
+
+
+
+
+  private void InitializeGuiComponents()
+    {
+    menuStrip1 = new System.Windows.Forms.MenuStrip();
+    fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    saveFileAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    closeAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    closeCurrentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    buildToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    buildToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+    showLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    cutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    selectAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    findToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    findNextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    removeEmptyLinesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    runWithoutDebuggingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    projectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    setCurrentProjectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    setExecutableToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    codeAnalysisToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    runToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    showNonAsciiToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+    BottomPanel = new System.Windows.Forms.Panel();
+    CursorLabel = new System.Windows.Forms.Label();
+    MainPanel = new System.Windows.Forms.Panel();
+    MainTabControl = new System.Windows.Forms.TabControl();
+    // tabPage1 = new System.Windows.Forms.TabPage();
+    // TextBox1 = new System.Windows.Forms.TextBox();
+    // tabPage2 = new System.Windows.Forms.TabPage();
+
+    KeyboardTimer = new System.Windows.Forms.Timer();
+    SingleInstanceTimer = new System.Windows.Forms.Timer();
+
+    OpenFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+    SaveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+    newFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+
+
+
+      /*
+      this.menuStrip1.SuspendLayout();
+      this.BottomPanel.SuspendLayout();
+      this.MainPanel.SuspendLayout();
+      this.MainTabControl.SuspendLayout();
+      this.tabPage1.SuspendLayout();
+      this.SuspendLayout();
+      */
+
+
+      // menuStrip1.Font = new System.Drawing.Font("Segoe UI", 19.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+      menuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
+      menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            fileToolStripMenuItem,
+            buildToolStripMenuItem,
+            editToolStripMenuItem,
+            debugToolStripMenuItem,
+            projectToolStripMenuItem,
+            codeAnalysisToolStripMenuItem,
+            helpToolStripMenuItem});
+      menuStrip1.Location = new System.Drawing.Point(0, 0);
+      menuStrip1.Name = "menuStrip1";
+      menuStrip1.Size = new System.Drawing.Size(995, 53);
+      menuStrip1.TabIndex = 0;
+      menuStrip1.Text = "menuStrip1";
+
+      fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            openToolStripMenuItem,
+            saveToolStripMenuItem,
+            saveFileAsToolStripMenuItem,
+            newFileToolStripMenuItem,
+            closeAllToolStripMenuItem,
+            closeCurrentToolStripMenuItem,
+            exitToolStripMenuItem});
+      fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+      fileToolStripMenuItem.Size = new System.Drawing.Size(81, 49);
+      fileToolStripMenuItem.Text = "&File";
+
+      openToolStripMenuItem.Name = "openToolStripMenuItem";
+      openToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
+      openToolStripMenuItem.Text = "&Open";
+      openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
+
+      saveToolStripMenuItem.Name = "saveToolStripMenuItem";
+      saveToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
+      saveToolStripMenuItem.Text = "Save A&ll";
+      saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+
+      saveFileAsToolStripMenuItem.Name = "saveFileAsToolStripMenuItem";
+      saveFileAsToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
+      saveFileAsToolStripMenuItem.Text = "&Save File As";
+      saveFileAsToolStripMenuItem.Click += new System.EventHandler(this.saveFileAsToolStripMenuItem_Click);
+
+      closeAllToolStripMenuItem.Name = "closeAllToolStripMenuItem";
+      closeAllToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
+      closeAllToolStripMenuItem.Text = "&Close All";
+      closeAllToolStripMenuItem.Click += new System.EventHandler(this.closeAllToolStripMenuItem_Click);
+
+      closeCurrentToolStripMenuItem.Name = "closeCurrentToolStripMenuItem";
+      closeCurrentToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
+      closeCurrentToolStripMenuItem.Text = "Close C&urrent";
+      closeCurrentToolStripMenuItem.Click += new System.EventHandler(this.closeCurrentToolStripMenuItem_Click);
+
+      exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+      exitToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
+      exitToolStripMenuItem.Text = "E&xit";
+      exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+
+      buildToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            buildToolStripMenuItem1,
+            showLogToolStripMenuItem});
+      buildToolStripMenuItem.Name = "buildToolStripMenuItem";
+      buildToolStripMenuItem.Size = new System.Drawing.Size(105, 49);
+      buildToolStripMenuItem.Text = "&Build";
+
+      buildToolStripMenuItem1.Name = "buildToolStripMenuItem1";
+      buildToolStripMenuItem1.Size = new System.Drawing.Size(249, 50);
+      buildToolStripMenuItem1.Text = "B&uild";
+      buildToolStripMenuItem1.Click += new System.EventHandler(this.buildToolStripMenuItem1_Click);
+
+      showLogToolStripMenuItem.Name = "showLogToolStripMenuItem";
+      showLogToolStripMenuItem.Size = new System.Drawing.Size(249, 50);
+      showLogToolStripMenuItem.Text = "Show &Log";
+      showLogToolStripMenuItem.Click += new System.EventHandler(this.showLogToolStripMenuItem_Click);
+
+      editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            copyToolStripMenuItem,
+            cutToolStripMenuItem,
+            selectAllToolStripMenuItem,
+            findToolStripMenuItem,
+            findNextToolStripMenuItem,
+            removeEmptyLinesToolStripMenuItem});
+      editToolStripMenuItem.Name = "editToolStripMenuItem";
+      editToolStripMenuItem.Size = new System.Drawing.Size(87, 49);
+      editToolStripMenuItem.Text = "&Edit";
+
+      copyToolStripMenuItem.Name = "copyToolStripMenuItem";
+      copyToolStripMenuItem.Size = new System.Drawing.Size(405, 50);
+      copyToolStripMenuItem.Text = "&Copy";
+      copyToolStripMenuItem.Click += new System.EventHandler(this.copyToolStripMenuItem_Click);
+
+      cutToolStripMenuItem.Name = "cutToolStripMenuItem";
+      cutToolStripMenuItem.Size = new System.Drawing.Size(405, 50);
+      cutToolStripMenuItem.Text = "Cu&t";
+      cutToolStripMenuItem.Click += new System.EventHandler(this.cutToolStripMenuItem_Click);
+
+      selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
+      selectAllToolStripMenuItem.Size = new System.Drawing.Size(405, 50);
+      selectAllToolStripMenuItem.Text = "Select &All";
+      selectAllToolStripMenuItem.Click += new System.EventHandler(this.selectAllToolStripMenuItem_Click);
+
+      findToolStripMenuItem.Name = "findToolStripMenuItem";
+      findToolStripMenuItem.Size = new System.Drawing.Size(405, 50);
+      findToolStripMenuItem.Text = "&Find";
+      findToolStripMenuItem.Click += new System.EventHandler(this.findToolStripMenuItem_Click);
+
+      findNextToolStripMenuItem.Name = "findNextToolStripMenuItem";
+      findNextToolStripMenuItem.Size = new System.Drawing.Size(405, 50);
+      findNextToolStripMenuItem.Text = "Find &Next";
+      findNextToolStripMenuItem.Click += new System.EventHandler(this.findNextToolStripMenuItem_Click);
+
+      removeEmptyLinesToolStripMenuItem.Name = "removeEmptyLinesToolStripMenuItem";
+      removeEmptyLinesToolStripMenuItem.Size = new System.Drawing.Size(405, 50);
+      removeEmptyLinesToolStripMenuItem.Text = "Remove &Empty Lines";
+      removeEmptyLinesToolStripMenuItem.Click += new System.EventHandler(this.removeEmptyLinesToolStripMenuItem_Click);
+
+      debugToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.runWithoutDebuggingToolStripMenuItem});
+      debugToolStripMenuItem.Name = "debugToolStripMenuItem";
+      debugToolStripMenuItem.Size = new System.Drawing.Size(129, 49);
+      debugToolStripMenuItem.Text = "&Debug";
+
+      runWithoutDebuggingToolStripMenuItem.Name = "runWithoutDebuggingToolStripMenuItem";
+      runWithoutDebuggingToolStripMenuItem.Size = new System.Drawing.Size(462, 50);
+      runWithoutDebuggingToolStripMenuItem.Text = "Run Wit&hout Debugging";
+      runWithoutDebuggingToolStripMenuItem.Click += new System.EventHandler(this.runWithoutDebuggingToolStripMenuItem_Click);
+
+      projectToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            setCurrentProjectToolStripMenuItem,
+            setExecutableToolStripMenuItem});
+      projectToolStripMenuItem.Name = "projectToolStripMenuItem";
+      projectToolStripMenuItem.Size = new System.Drawing.Size(131, 49);
+      projectToolStripMenuItem.Text = "&Project";
+
+      setCurrentProjectToolStripMenuItem.Name = "setCurrentProjectToolStripMenuItem";
+      setCurrentProjectToolStripMenuItem.Size = new System.Drawing.Size(377, 50);
+      setCurrentProjectToolStripMenuItem.Text = "Set &Current Project";
+      setCurrentProjectToolStripMenuItem.Click += new System.EventHandler(this.setCurrentProjectToolStripMenuItem_Click);
+
+      setExecutableToolStripMenuItem.Name = "setExecutableToolStripMenuItem";
+      setExecutableToolStripMenuItem.Size = new System.Drawing.Size(377, 50);
+      setExecutableToolStripMenuItem.Text = "Set &Executable";
+      setExecutableToolStripMenuItem.Click += new System.EventHandler(this.setExecutableToolStripMenuItem_Click);
+
+      codeAnalysisToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            runToolStripMenuItem});
+      codeAnalysisToolStripMenuItem.Name = "codeAnalysisToolStripMenuItem";
+      codeAnalysisToolStripMenuItem.Size = new System.Drawing.Size(233, 49);
+      codeAnalysisToolStripMenuItem.Text = "Code &Analysis";
+
+      runToolStripMenuItem.Name = "runToolStripMenuItem";
+      runToolStripMenuItem.Size = new System.Drawing.Size(164, 50);
+      runToolStripMenuItem.Text = "&Run";
+      runToolStripMenuItem.Click += new System.EventHandler(this.runToolStripMenuItem_Click);
+
+      helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            showNonAsciiToolStripMenuItem,
+            aboutToolStripMenuItem});
+      helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+      helpToolStripMenuItem.Size = new System.Drawing.Size(99, 49);
+      helpToolStripMenuItem.Text = "&Help";
+
+      showNonAsciiToolStripMenuItem.Name = "showNonAsciiToolStripMenuItem";
+      showNonAsciiToolStripMenuItem.Size = new System.Drawing.Size(337, 50);
+      showNonAsciiToolStripMenuItem.Text = "&Show Non-Ascii";
+      showNonAsciiToolStripMenuItem.Click += new System.EventHandler(this.showNonAsciiToolStripMenuItem_Click);
+
+      aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+      aboutToolStripMenuItem.Size = new System.Drawing.Size(337, 50);
+      aboutToolStripMenuItem.Text = "&About";
+      aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
+
+      BottomPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+      BottomPanel.Controls.Add(this.CursorLabel);
+      BottomPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+      BottomPanel.Location = new System.Drawing.Point(0, 391);
+      BottomPanel.Name = "BottomPanel";
+      BottomPanel.Size = new System.Drawing.Size(995, 44);
+      BottomPanel.TabIndex = 1;
+
+      CursorLabel.AutoSize = true;
+      CursorLabel.Location = new System.Drawing.Point(10, 2);
+      CursorLabel.Name = "CursorLabel";
+      CursorLabel.Size = new System.Drawing.Size(180, 56);
+      CursorLabel.TabIndex = 0;
+      CursorLabel.Text = "label1";
+
+      MainPanel.Controls.Add(this.MainTabControl);
+      MainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+      MainPanel.Location = new System.Drawing.Point(0, 53);
+      MainPanel.Name = "MainPanel";
+      MainPanel.Size = new System.Drawing.Size(995, 338);
+      MainPanel.TabIndex = 2;
+
+      // MainTabControl.Controls.Add(this.tabPage1);
+      // MainTabControl.Controls.Add(this.tabPage2);
+
+      MainTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+      MainTabControl.Location = new System.Drawing.Point(0, 0);
+      MainTabControl.Multiline = true;
+      MainTabControl.Name = "MainTabControl";
+      MainTabControl.SelectedIndex = 0;
+      MainTabControl.Size = new System.Drawing.Size(995, 338);
+      MainTabControl.TabIndex = 0;
+
+     /*
+      this.TextBox1.AcceptsReturn = true;
+      this.TextBox1.BackColor = System.Drawing.Color.Black;
+      this.TextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+      this.TextBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 28F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+      this.TextBox1.ForeColor = System.Drawing.Color.White;
+      this.TextBox1.Location = new System.Drawing.Point(3, 3);
+      this.TextBox1.MaxLength = 32001;
+      this.TextBox1.Multiline = true;
+      this.TextBox1.Name = "TextBox1";
+      this.TextBox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+      this.TextBox1.Size = new System.Drawing.Size(981, 264);
+      this.TextBox1.TabIndex = 0;
+      this.TextBox1.WordWrap = false;
+
+      this.tabPage2.Location = new System.Drawing.Point(4, 25);
+      this.tabPage2.Name = "tabPage2";
+      this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+      this.tabPage2.Size = new System.Drawing.Size(987, 309);
+      this.tabPage2.TabIndex = 1;
+      this.tabPage2.Text = "tabPage2";
+      this.tabPage2.UseVisualStyleBackColor = true;
+*/
+
+      KeyboardTimer.Tick += new System.EventHandler(this.KeyboardTimer_Tick);
+      SingleInstanceTimer.Tick += new System.EventHandler(this.SingleInstanceTimer_Tick);
+
+      newFileToolStripMenuItem.Name = "newFileToolStripMenuItem";
+      newFileToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
+      newFileToolStripMenuItem.Text = "&New File";
+      newFileToolStripMenuItem.Click += new System.EventHandler(this.newFileToolStripMenuItem_Click);
+
+      this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+      this.BackColor = System.Drawing.Color.Black;
+      this.ClientSize = new System.Drawing.Size(995, 445);
+      this.Controls.Add(this.MainPanel);
+      this.Controls.Add(this.BottomPanel);
+      this.Controls.Add(this.menuStrip1);
+      this.Font = new System.Drawing.Font("Consolas", 28.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+      this.ForeColor = System.Drawing.Color.White;
+      this.KeyPreview = true;
+      this.MainMenuStrip = this.menuStrip1;
+      this.Name = "MainForm";
+      this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+      this.Text = "Code Editor V2";
+      this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+      this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
+      this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
+
+
+      /*
+      this.menuStrip1.ResumeLayout(false);
+      this.menuStrip1.PerformLayout();
+      this.BottomPanel.ResumeLayout(false);
+      this.BottomPanel.PerformLayout();
+      this.MainPanel.ResumeLayout(false);
+      this.MainTabControl.ResumeLayout(false);
+      this.tabPage1.ResumeLayout(false);
+      this.tabPage1.PerformLayout();
+      this.ResumeLayout(false);
+      this.PerformLayout();
+      */
+    }
+
 
 
   }
 }
+
+
+
+
+
+
+
 
 
 
