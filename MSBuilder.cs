@@ -15,7 +15,7 @@ using System.Diagnostics;
 using System.IO;
 
 
-namespace CodeEditor
+namespace CodeEditor2
 {
   class MSBuilder
   {
@@ -124,5 +124,10 @@ pause
 
   }
 }
+
+
+
+
+
 
 
