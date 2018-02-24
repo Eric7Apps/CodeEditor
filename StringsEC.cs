@@ -2,6 +2,7 @@
 // My blog is at:
 // ericsourcecode.blogspot.com
 
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,7 +10,7 @@ using System.Text;
 
 
 
-namespace CodeEditor
+namespace CodeEditor2
 {
   static class StringsEC
   {
@@ -637,5 +638,8 @@ namespace CodeEditor
 
   }
 }
+
+
+
 
 
