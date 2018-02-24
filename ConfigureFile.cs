@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 
 
-namespace CodeEditor
+namespace CodeEditor2
 {
   class ConfigureFile
   {
@@ -34,7 +34,7 @@ namespace CodeEditor
 
     FileName = FileToUseName;
     // AESEncrypt = new AESEncryption();
-    // string ExampleKey = "Where does this key come from? 
+    // string ExampleKey = "Where does this key come from?
     // AESEncrypt.SetKey( ExampleKey );
 
     CDictionary = new Dictionary<string, string>();
@@ -88,7 +88,7 @@ namespace CodeEditor
     {
     using( StreamReader SReader = new StreamReader( FileName, Encoding.UTF8 ))
       {
-      while( SReader.Peek() >= 0 ) 
+      while( SReader.Peek() >= 0 )
         {
         string Line = SReader.ReadLine();
         if( Line == null )
@@ -193,3 +193,9 @@ namespace CodeEditor
 
   }
 }
+
+
+
+
+
+
