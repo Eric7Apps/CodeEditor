@@ -10,7 +10,7 @@ using System.Text;
 using System.IO;
 
 
-namespace CodeEditor
+namespace CodeEditor2
 {
   class BuildLog
   {
@@ -51,7 +51,7 @@ namespace CodeEditor
     {
     using( StreamReader SReader = new StreamReader( FileName, Encoding.UTF8 ))
       {
-      while( SReader.Peek() >= 0 ) 
+      while( SReader.Peek() >= 0 )
         {
         string Line = SReader.ReadLine();
         if( Line == null )
@@ -108,3 +108,8 @@ namespace CodeEditor
 
   }
 }
+
+
+
+
+
