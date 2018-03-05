@@ -3,9 +3,6 @@
 // ericsourcecode.blogspot.com
 
 
-// Set the path for Java in a batch file.
-// set PATH=%PATH%;C:\xampp\php
-
 
 // Code Editor version 2.
 
@@ -36,7 +33,7 @@ namespace CodeEditor2
   // public partial class MainForm : Form
   public class MainForm : Form
   {
-  internal const string VersionDate = "2/24/2018";
+  internal const string VersionDate = "3/5/2018";
   internal const int VersionNumber = 20; // 2.0
   private System.Threading.Mutex SingleInstanceMutex = null;
   private bool IsSingleInstance = false;
@@ -1291,7 +1288,8 @@ namespace CodeEditor2
     {
     OpenFileDialog1.Title = "Code Editor";
     OpenFileDialog1.InitialDirectory = "C:\\Eric\\"; // DataDirectory;
-    OpenFileDialog1.Filter = "exe files (*.exe)|*.exe";
+    // OpenFileDialog1.Filter = "exe files (*.exe)|*.exe";
+    OpenFileDialog1.Filter = "All Files (*.*)|*.*";
 
     if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
       return;
@@ -1658,8 +1656,6 @@ namespace CodeEditor2
 
   }
 }
-
-
 
 
 
