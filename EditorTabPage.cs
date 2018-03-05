@@ -3,6 +3,7 @@
 // ericsourcecode.blogspot.com
 
 
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -77,7 +78,7 @@ namespace CodeEditor2
         }
       }
 
-    MainTextBox.Text = SBuilder.ToString();
+    MainTextBox.Text = SBuilder.ToString().TrimEnd();
     return true;
     }
     catch( Exception Except )
@@ -124,7 +125,15 @@ namespace CodeEditor2
     {
     MForm.ShowStatus( "Saving: " + FileName );
 
-    using( StreamWriter SWriter = new StreamWriter( FileName, false, Encoding.UTF8 ))
+    Encoding Encode = Encoding.UTF8;
+    if( FileName.ToLower().EndsWith( ".bat" ) ||
+        FileName.ToLower().EndsWith( ".java" ))
+      {
+      MForm.ShowStatus( "Using Ascii encoding." );
+      Encode = Encoding.ASCII;
+      }
+
+    using( StreamWriter SWriter = new StreamWriter( FileName, false, Encode ))
       {
       string[] Lines = MainTextBox.Lines;
 
@@ -152,6 +161,9 @@ namespace CodeEditor2
 
   }
 }
+
+
+
 
 
 
