@@ -2,6 +2,12 @@
 // Notes on this source code are at:
 // ericsourcecode.blogspot.com
 
+// Make a drop down list of files to choose from
+// instead of using OpenDialog.
+
+// Use UTF8 to save (but not open/read) the source
+// code files.  Test it with a Java source code file.
+// Check UTF8 thoroughly.  Is it secure?  Valid?
 
 
 using System;
@@ -161,10 +167,4 @@ namespace CodeEditor2
 
   }
 }
-
-
-
-
-
-
 
