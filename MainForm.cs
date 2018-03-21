@@ -33,7 +33,7 @@ namespace CodeEditor2
   // public partial class MainForm : Form
   public class MainForm : Form
   {
-  internal const string VersionDate = "3/5/2018";
+  internal const string VersionDate = "3/21/2018";
   internal const int VersionNumber = 20; // 2.0
   private System.Threading.Mutex SingleInstanceMutex = null;
   private bool IsSingleInstance = false;
@@ -576,10 +576,39 @@ namespace CodeEditor2
 
 
 
+  private bool FileIsInTabPages( string FileName )
+    {
+    try
+    {
+    for( int Count = 0; Count < TabPagesArrayLast; Count++ )
+      {
+      if( FileName.ToLower() == TabPagesArray[Count].FileName.ToLower())
+        return true;
+
+      }
+
+    return false;
+
+    }
+    catch( Exception Except )
+      {
+      MessageBox.Show( "Exception in MainForm.FileIsInTabPages(). " + Except.Message, MessageBoxTitle, MessageBoxButtons.OK );
+      return false;
+      }
+    }
+
+
+
   private void AddNewPage( string TabTitle, string FileName )
     {
     try
     {
+    if( FileIsInTabPages( FileName ))
+      {
+      MessageBox.Show( "That file is already in the tab pages:\r\n" + FileName, MessageBoxTitle, MessageBoxButtons.OK );
+      return;
+      }
+
     TabPage TabPage1 = new TabPage();
     TextBox TextBox1 = new TextBox();
 
@@ -1656,12 +1685,4 @@ namespace CodeEditor2
 
   }
 }
-
-
-
-
-
-
-
-
 
