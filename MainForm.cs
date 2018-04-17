@@ -33,7 +33,7 @@ namespace CodeEditor2
   // public partial class MainForm : Form
   public class MainForm : Form
   {
-  internal const string VersionDate = "3/21/2018";
+  internal const string VersionDate = "4/17/2018";
   internal const int VersionNumber = 20; // 2.0
   private System.Threading.Mutex SingleInstanceMutex = null;
   private bool IsSingleInstance = false;
@@ -1306,7 +1306,12 @@ namespace CodeEditor2
     ClearStatus();
 
     string FileName = ProjectConfigFile.GetString( "ProjectDirectory" );
-    FileName += "\\msbuild.log";
+    if( File.Exists( FileName + "\\JavaBuild.log" ))
+      FileName += "\\JavaBuild.log";
+    else
+      FileName += "\\msbuild.log";
+
+    ShowStatus( "Log file: " + FileName );
     BuildLog Log = new BuildLog( FileName, this );
     Log.ReadFromTextFile();
     }
@@ -1685,4 +1690,6 @@ namespace CodeEditor2
 
   }
 }
+
+
 
