@@ -18,6 +18,7 @@ namespace CodeEditor2
   // private Dictionary<string, string> CDictionary;
   private string FileName;
 
+
   private BuildLog()
     {
     }
@@ -46,6 +47,8 @@ namespace CodeEditor2
       }
 
     bool DoneFound = false;
+    if( FileName.Contains( "JavaBuild.log" ))
+      DoneFound = true;        
 
     try
     {
@@ -108,8 +111,3 @@ namespace CodeEditor2
 
   }
 }
-
-
-
-
-
