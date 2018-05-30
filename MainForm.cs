@@ -1,6 +1,7 @@
 // Copyright Eric Chauvin 2018.
 // My blog is at:
-// ericsourcecode.blogspot.com
+// https://scientificmodels.blogspot.com/
+
 
 
 
@@ -33,7 +34,7 @@ namespace CodeEditor2
   // public partial class MainForm : Form
   public class MainForm : Form
   {
-  internal const string VersionDate = "4/17/2018";
+  internal const string VersionDate = "5/30/2018";
   internal const int VersionNumber = 20; // 2.0
   private System.Threading.Mutex SingleInstanceMutex = null;
   private bool IsSingleInstance = false;
@@ -1224,43 +1225,6 @@ namespace CodeEditor2
 
 
 
-
-    /*
-      internal void SearchWebPagesDirectory()
-
-      try
-        {
-        WebFilesDictionary.Clear();
-
-        string[] FileEntries = Directory.GetFiles( MForm.GetWebPagesDirectory(), "*.*" );
-
-        foreach( string FileName in FileEntries )
-          {
-          string ShortName = FileName.Replace( MForm.GetWebPagesDirectory(), "" );
-          ShortName = ShortName.ToLower();
-
-          if( !MForm.CheckEvents())
-            return;
-
-          }
-
-        string [] SubDirEntries = Directory.GetDirectories( Name );
-        foreach( string SubDir in SubDirEntries )
-          {
-          Do a recursive search through sub directories.
-          ProcessOneDirectory( SubDir );
-          }
-        }
-        catch( Exception Except )
-          {
-          MForm.ShowWebListenerFormStatus( "Exception in SearchWebPagesDirectory():" );
-          MForm.ShowWebListenerFormStatus( Except.Message );
-          }
-        }
-        */
-
-
-
   internal bool StartProgramOrFile( string FileName )
     {
     if( !File.Exists( FileName ))
@@ -1690,6 +1654,7 @@ namespace CodeEditor2
 
   }
 }
+
 
 
 
