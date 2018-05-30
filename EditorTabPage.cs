@@ -1,22 +1,16 @@
-// Programming by Eric Chauvin.
-// Notes on this source code are at:
-// ericsourcecode.blogspot.com
+// Copyright Eric Chauvin 2018.
+// My blog is at:
+// https://scientificmodels.blogspot.com/
 
-// Make a drop down list of files to choose from
-// instead of using OpenDialog.
-
-// Use UTF8 to save (but not open/read) the source
-// code files.  Test it with a Java source code file.
-// Check UTF8 thoroughly.  Is it secure?  Valid?
 
 
 using System;
-using System.Collections.Generic;
+// using System.Collections.Generic;
 using System.ComponentModel;
 // using System.Data;
 using System.Drawing;
 using System.Text;
-using System.Threading.Tasks;
+// using System.Threading.Tasks;
 using System.Windows.Forms;
 // using System.Diagnostics; // For start program process.
 using System.IO;
@@ -52,6 +46,8 @@ namespace CodeEditor2
     }
 
 
+
+/*
   private bool ReadFromTextFile( string FileName, bool AsciiOnly )
     {
     try
@@ -94,37 +90,77 @@ namespace CodeEditor2
       return false;
       }
     }
+*/
 
 
 
-  internal void RemoveEmptyLines()
+  private bool ReadFromTextFile( string FileName, bool AsciiOnly )
     {
     try
     {
-    StringBuilder SBuilder = new StringBuilder();
-    foreach( string Line in MainTextBox.Lines )
+    if( !File.Exists( FileName ))
       {
-      if( Line == null )
-        continue;
-
-      string TestS = Line.Trim();
-      if( TestS.Length < 1 )
-        continue;
-
-      SBuilder.Append( Line + "\r\n" );
+      // Might be adding a new file that doesn't
+      // exist yet.
+      MainTextBox.Text = "";
+      return false;
       }
 
-    MainTextBox.Text = SBuilder.ToString();
+    // This opens the file, reads or writes all the
+    // bytes, then closes the file.
+    byte[] FileBytes = File.ReadAllBytes( FileName );
+    if( FileBytes == null )
+      {
+      MainTextBox.Text = "FileBytes was null.";
+      return false;
+      }
+
+    string FileS = UTF8Strings.BytesToString( FileBytes, 1000000000 );
+
+    StringBuilder SBuilder = new StringBuilder();
+    StringBuilder FileSBuilder = new StringBuilder();
+
+    int Last = FileS.Length;
+    for( int Count = 0; Count < Last; Count++ )
+      {
+      char OneChar = FileS[Count];
+      if( OneChar == '\r' )
+        continue; // Ignore it.
+
+      if( OneChar == '\n' )
+        {
+        string Line = SBuilder.ToString();
+        SBuilder.Clear();
+        Line = Line.Replace( "\t", "  " );
+        Line = StringsEC.GetCleanUnicodeString( Line, 4000, false );
+        Line = Line.TrimEnd();
+
+        // if( Line == "" )
+          // continue;
+
+        FileSBuilder.Append( Line + "\r\n" );
+        continue;
+        }
+
+      SBuilder.Append( OneChar );
+      }
+
+    MainTextBox.Text = FileSBuilder.ToString().TrimEnd();
+    return true;
     }
     catch( Exception Except )
       {
-      MForm.ShowStatus( "Exception in RemoveEmptyLines():" );
+      MForm.ShowStatus( "Could not read the file: \r\n" + FileName );
       MForm.ShowStatus( Except.Message );
+      return false;
       }
     }
 
 
 
+
+
+/*
   internal bool WriteToTextFile()
     {
     try
@@ -162,11 +198,84 @@ namespace CodeEditor2
       return false;
       }
     }
+*/
+
+
+
+
+  internal bool WriteToTextFile()
+    {
+    try
+    {
+    MForm.ShowStatus( "Saving: " + FileName );
+
+    // if( FileName.ToLower().EndsWith( ".bat" ) ||
+    //     FileName.ToLower().EndsWith( ".java" ))
+
+    string[] Lines = MainTextBox.Lines;
+    StringBuilder FileSBuilder = new StringBuilder();
+
+    foreach( string Line in Lines )
+      {
+      FileSBuilder.Append( Line.TrimEnd() + "\n" );
+      }
+
+    byte[] FileBytes = UTF8Strings.StringToBytes( FileSBuilder.ToString() );
+    if( FileBytes == null )
+      {
+      MForm.ShowStatus( "FileBytes was null for:" );
+      MForm.ShowStatus( FileName );
+      return false;
+      }
+
+    File.WriteAllBytes( FileName, FileBytes );
+    return true;
+    }
+    catch( Exception Except )
+      {
+      MForm.ShowStatus( "Could not write to the file:" );
+      MForm.ShowStatus( FileName );
+      MForm.ShowStatus( Except.Message );
+      return false;
+      }
+    }
+
+
+
+  internal void RemoveEmptyLines()
+    {
+    try
+    {
+    StringBuilder SBuilder = new StringBuilder();
+    foreach( string Line in MainTextBox.Lines )
+      {
+      if( Line == null )
+        continue;
+
+      string TestS = Line.Trim();
+      if( TestS.Length < 1 )
+        continue;
+
+      SBuilder.Append( Line + "\r\n" );
+      }
+
+    MainTextBox.Text = SBuilder.ToString();
+    }
+    catch( Exception Except )
+      {
+      MForm.ShowStatus( "Exception in RemoveEmptyLines():" );
+      MForm.ShowStatus( Except.Message );
+      }
+    }
 
 
 
   }
 }
+
+
+
+
 
 
 
