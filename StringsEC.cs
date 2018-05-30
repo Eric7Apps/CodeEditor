@@ -168,7 +168,6 @@ namespace CodeEditor2
       {
       char ToCheck = InString[Count];
 
-      // Replace tabs and CR LF with spaces.
       if( ToCheck < ' ' )
         ToCheck = ' ';
 
@@ -208,11 +207,7 @@ namespace CodeEditor2
       // Miscellaneous Symbols and Arrows (2B002BFF)
       // Control characters.
 
-      if( (ToCheck >= 127) && (ToCheck <= 160))
-        ToCheck = ' ';
-
-      // Control character?
-      if( ToCheck == 173 )
+      if( (ToCheck >= 127) && (ToCheck <= 254))
         ToCheck = ' ';
 
       SBuilder.Append( Char.ToString( ToCheck ));
@@ -638,6 +633,7 @@ namespace CodeEditor2
 
   }
 }
+
 
 
 
