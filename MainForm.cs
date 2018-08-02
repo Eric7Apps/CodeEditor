@@ -34,7 +34,7 @@ namespace CodeEditor2
   // public partial class MainForm : Form
   public class MainForm : Form
   {
-  internal const string VersionDate = "5/30/2018";
+  internal const string VersionDate = "8/2/2018";
   internal const int VersionNumber = 20; // 2.0
   private System.Threading.Mutex SingleInstanceMutex = null;
   private bool IsSingleInstance = false;
@@ -74,7 +74,6 @@ namespace CodeEditor2
   private OpenFileDialog OpenFileDialog1;
   private ToolStripMenuItem openToolStripMenuItem;
   private ToolStripMenuItem showNonAsciiToolStripMenuItem;
-  private ToolStripMenuItem closeAllToolStripMenuItem;
   private SaveFileDialog SaveFileDialog1;
   private ToolStripMenuItem saveFileAsToolStripMenuItem;
   private ToolStripMenuItem editToolStripMenuItem;
@@ -475,7 +474,6 @@ namespace CodeEditor2
     OpenFileDialog1.Dispose();
     openToolStripMenuItem.Dispose();
     showNonAsciiToolStripMenuItem.Dispose();
-    closeAllToolStripMenuItem.Dispose();
     SaveFileDialog1.Dispose();
     saveFileAsToolStripMenuItem.Dispose();
     editToolStripMenuItem.Dispose();
@@ -803,7 +801,7 @@ namespace CodeEditor2
     }
 
 
-
+/*
   private void CloseAllFiles()
     {
     // Don't save anything automatically.
@@ -828,6 +826,7 @@ namespace CodeEditor2
 
     AddStatusPage();
     }
+*/
 
 
 
@@ -881,13 +880,6 @@ namespace CodeEditor2
   private void exitToolStripMenuItem_Click(object sender, EventArgs e)
     {
     Close();
-    }
-
-
-
-  private void closeAllToolStripMenuItem_Click(object sender, EventArgs e)
-    {
-    CloseAllFiles();
     }
 
 
@@ -985,7 +977,6 @@ namespace CodeEditor2
     if( OpenFileDialog1.ShowDialog() != DialogResult.OK )
       return;
 
-    // CloseAllFiles();
     MainTabControl.TabPages.Clear();
     TabPagesArrayLast = 0;
     AddStatusPage();
@@ -1331,7 +1322,6 @@ namespace CodeEditor2
     openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
     saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
     saveFileAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-    closeAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
     closeCurrentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
     exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
     buildToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -1402,7 +1392,6 @@ namespace CodeEditor2
             saveToolStripMenuItem,
             saveFileAsToolStripMenuItem,
             newFileToolStripMenuItem,
-            closeAllToolStripMenuItem,
             closeCurrentToolStripMenuItem,
             exitToolStripMenuItem});
       fileToolStripMenuItem.Name = "fileToolStripMenuItem";
@@ -1423,11 +1412,6 @@ namespace CodeEditor2
       saveFileAsToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
       saveFileAsToolStripMenuItem.Text = "&Save File As";
       saveFileAsToolStripMenuItem.Click += new System.EventHandler(this.saveFileAsToolStripMenuItem_Click);
-
-      closeAllToolStripMenuItem.Name = "closeAllToolStripMenuItem";
-      closeAllToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
-      closeAllToolStripMenuItem.Text = "&Close All";
-      closeAllToolStripMenuItem.Click += new System.EventHandler(this.closeAllToolStripMenuItem_Click);
 
       closeCurrentToolStripMenuItem.Name = "closeCurrentToolStripMenuItem";
       closeCurrentToolStripMenuItem.Size = new System.Drawing.Size(301, 50);
@@ -1654,6 +1638,8 @@ namespace CodeEditor2
 
   }
 }
+
+
 
 
 
